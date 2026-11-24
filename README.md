@@ -1,43 +1,52 @@
-# agentic-tech-studio｜Agent 视频工作室
+# AgenticTechStudio
 
-面向小白的 AI / 计算机科普视频项目。多模型 Agent 分工协作，全流程 AI Native，用作求职作品：证明文科背景也有真实的技术认知。
+一个文科生用 AI Agent 做技术科普视频的公开实验。
 
-## 目标
+从读论文、写剧本到出成片，每一步都交给多个大模型分工完成，我负责定方向、做判断、验收结果。过程全部公开在这个仓库里。
 
-- 核心交付：讲清 MGA 本身——预训练数据为什么不够、改写如何扩充数据、与模型能力的关系（见 [ADR-0001](decisions/0001-mga-explanation-as-core.md)）。
-- 载体：一组有趣的科普视频，剧本素材参考 MGA 数据集的改写文本。
-- 沉淀一份可复现的 AI Native 制作流程。
+## 我在做什么
 
-## 状态
+用一组面向小白、有趣的短视频，讲清楚一个 AI 技术问题：**大模型的训练数据不够用了，怎么办？**
 
-2026-11-24 立项，尚未开工。
+素材来自字节跳动 Seed 团队的 MGA（Massive Genre-Audience Reformulation）。它把教育类网页按不同的「体裁 × 受众」改写成多个版本，用来扩充预训练语料。这个方法本身就是一种“把知识换个讲法”，正好拿来做科普的素材和主题。
 
-## 前置任务
+这个项目的核心不是视频数量，而是能把下面三件事讲明白（决策记录见 [ADR-0001](decisions/0001-mga-explanation-as-core.md)）：
 
-1. 硬件环境：研究服务器自建 VPN（先确认是否必要与合规；备选：自建 API 中转 / 模型网关）。
-2. 软件认知：调研前沿基模的能力与实现路径，定分工方案；速通课补基础。
-3. 素材核验：MGA 数据集的体裁 / 受众字段与许可证。
+1. 预训练数据为什么会不够；
+2. 按体裁和受众改写，怎样扩充数据；
+3. 这跟模型能力有什么关系。
 
-## 待确认
+## 我做了什么
 
-- 验收标准：视频条数、时长、发布平台、是否配技术复盘文档。
-- 截止时间：对应哪一轮求职。
-- 假设（未验证）：MGA 不是剧本库，而是把教育网页按「体裁 × 受众」改写的语料，可能直接充当「技术知识 → 小白叙事」素材。待核对 HuggingFace 字段与许可证，结论落 `research/mga-dataset.md`。
-- 「GPT-6.2 擅长三维视频」尚未查证，不作为前提。
+| 日期 | 进展 |
+|---|---|
+| 2026-11-24 | 立项；确定「讲清 MGA」为核心交付，视频为载体 |
 
-## 参考资料
+正在进行：
 
-- 论文：Reformulation for Pretraining Data Augmentation（ICLR 2026）https://arxiv.org/abs/2502.04235
-- MGACorpus：https://huggingface.co/datasets/bytedance-research/MAGACorpus
-- MGA-FineWeb-Edu：https://huggingface.co/datasets/ByteDance-Seed/mga-fineweb-edu
+- [ ] 核对 MGA 数据集：有哪些体裁 / 受众字段、改写样例长什么样、许可证允许怎么用
+- [ ] 调研前沿大模型在脚本、画面、视频生成上的实际能力，定分工方案
+- [ ] 搭建稳定访问海外模型的网络与 API 环境
+- [ ] 速通补齐必要的技术基础
 
-## 公开发布
+待验证的假设（不作为前提）：
 
-- 目标仓库：https://github.com/Gillian-2024/AgenticTechStudio
-- 提交身份：仓库级 `git config user.email linj42520@gmail.com`，不改全局配置。
-- 脱敏：不含任何前雇主 / 公司内部信息，push 前全文自查。
-- 公开版 README 回答三件事：在做什么、做了什么、想复现怎么做。
+- MGA 的改写文本可以直接当作「技术知识 → 小白叙事」的剧本素材；
+- 不同模型各有所长（如审美、三维画面），适合分工协作。
 
-## 工作流约定
+## 想自己做一遍，可以怎么做
 
-目录按需新建，不预建空目录。开工后再定子目录（如 research/、scripts/、output/）。
+流程跑通后，这里会写成可复现的步骤（使用的模型、提示词、工具链、踩过的坑）。目前可以先从这些资料开始：
+
+- 论文：[Reformulation for Pretraining Data Augmentation](https://arxiv.org/abs/2502.04235)（ICLR 2026）
+- 数据集：[MGACorpus](https://huggingface.co/datasets/bytedance-research/MAGACorpus)
+- 示例子集：[MGA-FineWeb-Edu](https://huggingface.co/datasets/ByteDance-Seed/mga-fineweb-edu)
+
+## 仓库结构
+
+```text
+README.md        项目说明（本文件）
+decisions/       关键决策记录（ADR）
+```
+
+后续按需增加 `research/`（调研结论）、`scripts/`（剧本与提示词）、`output/`（成片）。
