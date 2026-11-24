@@ -18,16 +18,18 @@
 
 ### A. 原生视频生成：模型直接出画面
 
-| 模型 | 单段时长 | 自带音频 | 价格（约） |
-|---|---|---|---|
-| Veo 3.1（Google） | 8 秒，可延长 | 有 | Lite ≈ $0.08/秒 |
-| Kling 3.0（快手） | 15 秒，可延长 | 有 | ≈ $0.10/秒 |
-| Seedance 2.5（字节，预览） | 4–30 秒 | 有 | ≈ $0.23–0.47/秒 |
-| Wan 3.0（阿里） | 30 秒 | 未验证 | ≈ $0.05–0.20/秒 |
-| MiniMax H3 | 15 秒 | 未验证 | ≈ $0.13/秒 |
-| Runway Gen-4.5 | 10 秒 | 需另配 | 订阅 $12 起/月 |
+价格已对照官方页面（2026-11-24）。时长上限仍来自第三方汇总，未验证。
 
-> 时长与价格来自第三方汇总（2026-10 前后），未逐一对照官方页面。
+| 模型 | 官方价格 | 国内入口 | 来源 |
+|---|---|---|---|
+| Veo 3.1（Google） | Lite 有声 $0.05–0.08，Fast 有声 $0.10–0.30，Standard 有声 $0.40；无声档约便宜一半 | 未查到 | [Vertex AI 定价](https://cloud.google.com/vertex-ai/generative-ai/pricing) |
+| Kling 3.0（快手） | 有声 0.9–3.0 元/秒，无声 0.6–3.0 元/秒（阿里云百炼代售价） | 阿里云百炼 | [百炼模型价格](https://help.aliyun.com/zh/model-studio/model-pricing) |
+| Seedance 2.5（字节） | 0.67（480p）– 6.03（4K）元/秒；flash 版 0.44–0.99 元/秒 | 火山引擎 | [火山方舟定价](https://www.volcengine.com/docs/82379/1544106) |
+| Wan 3.0（阿里） | 0.3（480p）– 1.2（1080p）元/秒 | 阿里云百炼 | [百炼模型价格](https://help.aliyun.com/zh/model-studio/model-pricing) |
+| MiniMax 海螺 H3 | 0.50（768P）– 0.80（2K）元/秒 | minimaxi.com | [MiniMax 定价](https://platform.minimaxi.com/document/Price) |
+| Runway Gen-4.5 | 12 credits/秒；订阅 $12/月起（年付） | 未查到 | [Runway 定价](https://runwayml.com/pricing) |
+
+> Veo、Kling 自带音频（按有声 / 无声分档计价已核实）；其余模型的音频能力未验证。
 
 - 擅长：氛围镜头、比喻画面。
 - 短板：画不准文字、公式、图表；同一提示词每次结果不同；按秒计费，反复调整成本高。
@@ -52,13 +54,13 @@
 
 ## 访问与合规
 
-- OpenAI、Anthropic、Google 的官方服务地区通常不含中国大陆（2026 年情况未验证，以各家官方「支持地区」页为准）。
-- 国内可合规使用：Kling、Seedance（火山引擎）、海螺 / MiniMax、Wan（阿里云百炼）；国内大模型也能写渲染代码。
+- OpenAI、Anthropic 的支持地区页抓到的片段里没有中国大陆，但列表不完整，结论未验证；Gemini API 的国家列表未取到。以各家官方「支持地区」页为准。
+- 国内有人民币计价控制台、可合规使用：Kling 与 Wan（阿里云百炼）、Seedance（火山引擎）、海螺（minimaxi.com）。国内大模型也能写渲染代码。
 - Manim、Remotion、ffmpeg 为开源工具，本地运行。
 
 ## 待验证
 
-- 各视频模型的官方价格与时长。
+- 各视频模型的单段时长上限与音频能力（价格已核实）。
 - GPT-6.2 写 Three.js 的实际效果（自己跑一条对比）。
 - Claude 与 GPT-6.2 写 Manim 的效果对比。
 
@@ -70,6 +72,6 @@
 | [OpenAI：Sora discontinuation](https://help.openai.com/en/articles/20001152-what-to-know-about-the-sora-discontinuation) | 2026 | 一手 | 已核实 |
 | [VibeVideoBench (arXiv 2610.35864)](https://arxiv.org/html/2610.35864v2) | 2026-10-27 | 一手论文 | 已核实摘要 |
 | [OpenRouter：GPT-6.2 Sol](https://openrouter.ai/openai/gpt-6.2-sol) | 2026-11 | 二手 | 子代理查阅 |
-| [seeddance.io 长视频模型对比](https://www.seeddance.io/blog/best-ai-video-generators-long-videos-2026) | 2026-10-15 | 二手 | 子代理查阅 |
-| [hedra 视频 API 价格对比](https://www.hedra.com/blog/video-model-api-cost-comparison) | 2026 | 二手 | 子代理查阅 |
+| 各家官方定价页（见上表） | 2026-11-24 | 一手 | 子代理查阅 |
+| [seeddance.io 长视频模型对比](https://www.seeddance.io/blog/best-ai-video-generators-long-videos-2026) | 2026-10-15 | 二手 | 时长数据来源 |
 | [awesome-claude-video-skills](https://github.com/zhuyansen/awesome-claude-video-skills) | 2026 | 二手 | 子代理查阅 |
