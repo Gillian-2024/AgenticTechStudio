@@ -6,7 +6,7 @@
 
 ## Y-Statement
 
-In the context of 用科普视频项目求职、证明文科背景有技术认知, facing 面试官会追问 MGA 是什么、为什么做数据增强, we decided 把「讲清 MGA」作为核心交付 over 以视频数量 / 画面效果为核心, to achieve 可被追问验证的技术理解, accepting 视频制作投入相对降低。
+In the context of 用科普视频展示对 AI 技术的理解, facing 观众会追问 MGA 是什么、为什么做数据增强, we decided 把「讲清 MGA」作为核心交付 over 以视频数量 / 画面效果为核心, to achieve 可被追问验证的技术理解, accepting 视频制作投入相对降低。
 
 ## Context
 
@@ -18,7 +18,7 @@ In the context of 用科普视频项目求职、证明文科背景有技术认�
 
 ## Consequences
 
-- 正向：作品经得起技术追问；讲解内容可复用到面试回答。
+- 正向：作品经得起技术追问；讲解内容可复用到其他场合。
 - 负向：需先投入时间读懂论文，视频产出推后。
 - 后续可能触发的 ADR：MGA 数据集核验结果若推翻素材假设，需重定剧本来源。
 
