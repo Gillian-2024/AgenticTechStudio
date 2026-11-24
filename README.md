@@ -21,32 +21,29 @@
 | 日期 | 进展 |
 |---|---|
 | 2026-11-24 | 立项；确定「讲清 MGA」为核心交付，视频为载体 |
+| 2026-11-24 | 核对 MGA 数据集：可作选题和剧本素材，不能直接当成稿（[调研](research/mga-dataset.md)） |
+| 2026-11-24 | 调研视频生成路线：选「代码渲染为主、原生视频点缀」（[调研](research/video-generation-paths.md)） |
 
 正在进行：
 
-- [ ] 核对 MGA 数据集：有哪些体裁 / 受众字段、改写样例长什么样、许可证允许怎么用
-- [ ] 调研前沿大模型在脚本、画面、视频生成上的实际能力，定分工方案
-- [ ] 搭建稳定访问海外模型的网络与 API 环境
+- [ ] 从 MGA 中筛出 AI/CS 主题的故事体样本
+- [ ] 跑通第一条样片：Claude 与 GPT-6.2 写 Manim / HTML 动画的效果对比
+- [ ] 技术练习：自己在服务器上搭一条加密隧道，弄懂路由与加密原理
 - [ ] 速通补齐必要的技术基础
-
-待验证的假设（不作为前提）：
-
-- MGA 的改写文本可以直接当作「技术知识 → 小白叙事」的剧本素材；
-- 不同模型各有所长（如审美、三维画面），适合分工协作。
 
 ## 想自己做一遍，可以怎么做
 
 流程跑通后，这里会写成可复现的步骤（使用的模型、提示词、工具链、踩过的坑）。目前可以先从这些资料开始：
 
 - 论文：[Reformulation for Pretraining Data Augmentation](https://arxiv.org/abs/2502.04235)（ICLR 2026）
-- 数据集：[MGACorpus](https://huggingface.co/datasets/bytedance-research/MAGACorpus)
-- 示例子集：[MGA-FineWeb-Edu](https://huggingface.co/datasets/ByteDance-Seed/mga-fineweb-edu)
+- 数据集：[ByteDance-Seed/mga-fineweb-edu](https://huggingface.co/datasets/ByteDance-Seed/mga-fineweb-edu)（原名 MAGACorpus，ODC-By 许可）
 
 ## 仓库结构
 
 ```text
 README.md        项目说明（本文件）
 decisions/       关键决策记录（ADR）
+research/        调研结论
 ```
 
-后续按需增加 `research/`（调研结论）、`scripts/`（剧本与提示词）、`output/`（成片）。
+后续按需增加 `scripts/`（剧本与提示词）、`output/`（成片）。
