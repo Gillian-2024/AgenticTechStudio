@@ -1,7 +1,7 @@
 # ADR-0001: 讲清 MGA 作为核心交付，视频作为载体
 
 - 日期：2026-11-24
-- 状态：accepted
+- 状态：superseded by [ADR-0002](0002-ai-native-pipeline-as-core.md)
 - 决策人：Gillian
 
 ## Y-Statement
