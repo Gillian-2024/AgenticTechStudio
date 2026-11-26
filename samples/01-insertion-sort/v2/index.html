@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>插入排序：小老鼠排队 v2</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#2a2238;overflow:hidden;font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:#f8ecd6;font-variant-numeric:tabular-nums}
+.abs{position:absolute;left:0;top:0}
+#bg{width:1920px;height:1080px;transform-origin:960px 540px}
+#dots{position:absolute;left:-400px;top:-300px;width:2720px;height:1300px;opacity:.5;
+ background-image:radial-gradient(circle,#ead7b6 3px,transparent 3.5px);background-size:56px 56px}
+.blob{position:absolute;border-radius:50%}
+#world{width:1920px;height:1080px;transform-origin:0 0}
+#floor{position:absolute;left:-1400px;top:820px;width:4720px;height:900px;background:#ecc58f;border-top:10px solid #d9a86c}
+.board{position:absolute;top:870px;height:6px;width:300px;border-radius:3px;background:#e0b57c}
+#zone{position:absolute;top:448px;height:396px;border-radius:34px;background:rgba(63,154,95,.14);border:5px dashed #3f9a5f}
+.shadow{position:absolute;top:812px;width:150px;height:22px;margin-left:-75px;border-radius:50%;background:rgba(122,84,46,.28)}
+.m{position:absolute;left:0;top:0;overflow:visible}
+#arrow{position:absolute;left:0;top:0;width:0;height:0}
+#arrow div{position:absolute;left:-28px;top:-30px;width:0;height:0;border-left:28px solid transparent;border-right:28px solid transparent;border-top:38px solid #ff7a2f}
+#check{position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:#ff7a2f;color:#fff8ee;font-size:80px;font-weight:900;display:flex;align-items:center;justify-content:center;border:6px solid #fff8ee}
+#cards{width:1920px;height:1080px;transform-origin:960px 560px}
+.card{position:absolute;left:0;top:0;width:180px;height:250px;margin:-125px 0 0 -90px;border-radius:20px;background:#fffaf0;border:5px solid #3b2a5e;
+ box-shadow:0 12px 0 rgba(59,42,94,.18);font-size:104px;font-weight:900;display:flex;align-items:center;justify-content:center;transform-origin:50% 100%}
+.card i{position:absolute;left:16px;top:6px;font-style:normal;font-size:40px}
+#title{position:absolute;left:0;right:0;top:150px;text-align:center;font-size:150px;font-weight:900;color:#3b2a5e;letter-spacing:14px}
+#title u{display:block;margin:12px auto 0;height:14px;border-radius:7px;background:#ff7a2f;text-decoration:none;transform-origin:0 50%}
+#rules{position:absolute;left:80px;right:80px;top:64px;display:flex;justify-content:center;gap:28px}
+.chip{padding:20px 34px;border-radius:26px;background:#fffaf0;border:5px solid #3b2a5e;font-size:46px;font-weight:700;color:#3b2a5e;white-space:nowrap;box-shadow:0 8px 0 rgba(59,42,94,.15)}
+.chip b{color:#ff7a2f}
+#cmp{position:absolute;left:0;right:0;top:56px;text-align:center;font-size:92px;font-weight:900;color:#3b2a5e}
+#cmp b{color:#ff7a2f}
+#cmp s{text-decoration:none;color:#c9b79a}
+#arr{position:absolute;left:0;right:0;top:186px;text-align:center;font-size:50px;font-weight:700;color:#8a6a48;letter-spacing:4px}
+#arr b{color:#ff7a2f}
+#endcard{position:absolute;left:50%;top:60px;padding:26px 60px;border-radius:30px;background:#3b2a5e;color:#fdf3e1;text-align:center;transform:translateX(-50%)}
+#endcard h2{font-size:80px;letter-spacing:10px}
+#endcard p{font-size:38px;color:#ffc79e;margin-top:6px}
+#sub{position:absolute;left:50%;bottom:48px;max-width:1720px;padding:16px 44px;border-radius:22px;background:rgba(47,36,66,.86);color:#fdf3e1;font-size:48px;line-height:1.4;text-align:center;white-space:nowrap}
+#bar{position:absolute;left:0;bottom:0;height:8px;background:#ff7a2f}
+</style>
+</head>
+<body>
+<div id="stage">
+ <div id="bg" class="abs"><div id="dots"></div></div>
+ <div id="world" class="abs">
+  <div id="floor"></div>
+  <div id="zone"></div>
+  <div id="shadows"></div>
+  <div id="mice"></div>
+  <div id="arrow"><div></div></div>
+  <div id="check">✓</div>
+ </div>
+ <div id="cards" class="abs"></div>
+ <div id="hud" class="abs" style="width:1920px;height:1080px">
+  <div id="title">插入排序<u></u></div>
+  <div id="rules">
+   <div class="chip">① 从<b>第二只</b>开始，往左看</div>
+   <div class="chip">② 比左边小 → <b>换</b></div>
+   <div class="chip">③ 换不动 → <b>停</b></div>
+  </div>
+  <div id="zlab" style="position:absolute;left:0;top:0;font-size:38px;font-weight:700;color:#3f9a5f;white-space:nowrap">已排好</div><div id="cmp"></div><div id="arr"></div>
+  <div id="endcard"><h2>插入排序</h2><p>左边一直排好，新来的找位置插进去</p></div>
+  <div id="sub"></div>
+  <div id="bar"></div>
+ </div>
+</div>
+<script>
+(function(){
+const TIMELINE={"total":63.664,"voice":"zh-CN-XiaoyiNeural","shots":[
+{"shot":1,"start":0.0,"end":4.112,"vo_start":0.3,"vo_end":3.612,"line":"打扑克的时候，你是怎么理牌的？"},
+{"shot":2,"start":4.112,"end":11.824,"vo_start":4.412,"vo_end":11.324,"line":"大多数人会一张一张拿起来，插到合适的位置。恭喜你，你已经会一个算法了！"},
+{"shot":3,"start":11.824,"end":17.328,"vo_start":12.124,"vo_end":16.828,"line":"它叫插入排序。今天请六只小老鼠来演示。"},
+{"shot":4,"start":17.328,"end":25.616,"vo_start":17.628,"vo_end":25.116,"line":"规则就一条：从第二只开始往左看，数字比左边小，就换位置；换不动，就停。"},
+{"shot":5,"start":25.616,"end":28.672,"vo_start":25.916,"vo_end":28.172,"line":"2 比 5 小，换！"},
+{"shot":6,"start":28.672,"end":34.128,"vo_start":28.972,"vo_end":33.628,"line":"4 比 5 小，换；再看 2，比 2 大，停。"},
+{"shot":7,"start":34.128,"end":38.528,"vo_start":34.428,"vo_end":38.028,"line":"6 比 5 大，原地不动，轻松。"},
+{"shot":8,"start":38.528,"end":43.456,"vo_start":38.828,"vo_end":42.956,"line":"1 最小，一口气换了四次，换到最前面！"},
+{"shot":9,"start":43.456,"end":49.536,"vo_start":43.756,"vo_end":49.036,"line":"最后是 3：跳过 6，跳过 5，跳过 4，停在 2 后面。"},
+{"shot":10,"start":49.536,"end":57.704,"vo_start":49.836,"vo_end":57.204,"line":"排好了！发现没有？左边这队一直是排好的，新来的只要找到位置插进去。"},
+{"shot":11,"start":57.704,"end":63.664,"vo_start":58.004,"vo_end":63.164,"line":"这就是插入排序。下次理牌的时候，你就是一台电脑。"}]};
+const TOTAL=TIMELINE.total, S=n=>TIMELINE.shots[n-1];
+// shot-relative helpers: at(n,f)=shot start + f*duration ; vo(n,f)= vo_start + f*vo duration
+const at=(n,f)=>S(n).start+f*(S(n).end-S(n).start);
+const vo=(n,f)=>S(n).vo_start+f*(S(n).vo_end-S(n).vo_start);
+
+const stage=document.getElementById('stage');
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform='scale('+s+')';stage.style.left=(innerWidth-1920*s)/2+'px';stage.style.top=(innerHeight-1080*s)/2+'px';}
+addEventListener('resize',fit);fit();
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)), c01=x=>clamp(x,0,1);
+const lerp=(a,b,k)=>a+(b-a)*k;
+const eio=x=>{x=c01(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;};
+const eo=x=>{x=c01(x);return 1-Math.pow(1-x,3);};
+const ei=x=>{x=c01(x);return x*x*x;};
+const eback=x=>{x=c01(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);};
+const win=(t,a,b,r)=>eio((t-a)/r)*(1-eio((t-b+r)/r)); // 0..1 window with ramps of r
+const ACC='#ff7a2f', INK='#3b2a5e';
+
+/* ---------------- background: 4 breathing blobs ---------------- */
+const BLOBS=[[260,230,380,'#ffe1bd',7.3],[1650,190,320,'#fbd6c6',8.9],[1480,620,260,'#ffe8c9',6.1],[420,640,220,'#f6dcc0',9.7]];
+const blobEls=BLOBS.map(b=>{const d=document.createElement('div');d.className='blob';
+ d.style.cssText='left:'+(b[0]-b[2])+'px;top:'+(b[1]-b[2])+'px;width:'+2*b[2]+'px;height:'+2*b[2]+'px;background:radial-gradient(circle,'+b[3]+' 0%,'+b[3]+' 45%,rgba(248,236,214,0) 70%)';
+ $('bg').appendChild(d);return d;});
+for(let i=0;i<14;i++){const d=document.createElement('div');d.className='board';d.style.left=(-1200+i*340+(i%2)*90)+'px';d.style.top=(870+(i%3)*70)+'px';$('floor').parentNode.insertBefore(d,$('zone'));}
+
+/* ---------------- mice ---------------- */
+const VALS=[5,2,4,6,1,3];
+const FUR={5:'#c7bfd6',2:'#d6b896',4:'#b4c3d6',6:'#dcbccb',1:'#c3cfa9',3:'#d6c79c'};
+const DX=190, FLOOR=820, slotX=i=>960+(i-2.5)*DX;
+function mouseSVG(c){return '<svg class="m" width="320" height="480" viewBox="-160 -440 320 480">'+
+ '<g class="root">'+
+  '<g class="tail"><path d="M-52 -36 C-110 -26 -120 -96 -152 -84" stroke="#e69aae" stroke-width="9" fill="none" stroke-linecap="round"/></g>'+
+  '<ellipse cx="-28" cy="-6" rx="20" ry="9" fill="#e9a5b8" stroke="'+INK+'" stroke-width="4"/><ellipse cx="28" cy="-6" rx="20" ry="9" fill="#e9a5b8" stroke="'+INK+'" stroke-width="4"/>'+
+  '<g class="chest"><ellipse cx="0" cy="-62" rx="66" ry="56" fill="'+c+'" stroke="'+INK+'" stroke-width="5"/><ellipse cx="0" cy="-52" rx="40" ry="32" fill="#fff4e4" opacity=".65"/></g>'+
+  '<g class="arm"><rect x="-5" y="-176" width="10" height="176" rx="5" fill="#9a6a3a"/>'+
+   '<g class="sign" transform="translate(0,-222)"><rect class="sr" x="-64" y="-54" width="128" height="108" rx="18" fill="#fffaf0" stroke="'+INK+'" stroke-width="6"/>'+
+   '<text class="st" x="0" y="25" text-anchor="middle" font-size="74" font-weight="900" fill="'+INK+'" style="font-variant-numeric:tabular-nums"></text></g></g>'+
+  '<g class="head">'+
+   '<circle cx="-46" cy="-40" r="30" fill="'+c+'" stroke="'+INK+'" stroke-width="5"/><circle cx="-46" cy="-40" r="15" fill="#f5b3c3"/>'+
+   '<circle cx="46" cy="-40" r="30" fill="'+c+'" stroke="'+INK+'" stroke-width="5"/><circle cx="46" cy="-40" r="15" fill="#f5b3c3"/>'+
+   '<ellipse cx="0" cy="0" rx="56" ry="47" fill="'+c+'" stroke="'+INK+'" stroke-width="5"/>'+
+   '<g class="eyes"><circle cx="-20" cy="-6" r="8" fill="'+INK+'"/><circle cx="20" cy="-6" r="8" fill="'+INK+'"/><circle cx="-17" cy="-9" r="2.6" fill="#fffaf0"/><circle cx="23" cy="-9" r="2.6" fill="#fffaf0"/></g>'+
+   '<g class="happy" opacity="0"><path d="M-30 -4 q10 -12 20 0 M10 -4 q10 -12 20 0" stroke="'+INK+'" stroke-width="5" fill="none" stroke-linecap="round"/></g>'+
+   '<circle cx="-34" cy="14" r="9" fill="#f08aa6" opacity=".45"/><circle cx="34" cy="14" r="9" fill="#f08aa6" opacity=".45"/>'+
+   '<circle cx="0" cy="14" r="8" fill="#e5708f"/>'+
+   '<path d="M-24 16 l-34 -5 M-24 22 l-34 6 M24 16 l34 -5 M24 22 l34 6" stroke="'+INK+'" stroke-width="3" stroke-linecap="round"/>'+
+  '</g>'+
+  '<circle cx="0" cy="-78" r="11" fill="'+c+'" stroke="'+INK+'" stroke-width="4" class="hand"/>'+
+ '</g></svg>';}
+const mice={};
+VALS.forEach(v=>{const w=document.createElement('div');w.innerHTML=mouseSVG(FUR[v]);const svg=w.firstChild;$('mice').appendChild(svg);
+ const sh=document.createElement('div');sh.className='shadow';$('shadows').appendChild(sh);
+ const q=s=>svg.querySelector(s);
+ mice[v]={svg,sh,root:q('.root'),tail:q('.tail'),chest:q('.chest'),arm:q('.arm'),sign:q('.sign'),sr:q('.sr'),st:q('.st'),head:q('.head'),eyes:q('.eyes'),happy:q('.happy'),hand:q('.hand')};});
+
+/* jumps: driven by timeline; shot 9 split into 3 equal beats of the vo window */
+const B9=(S(9).vo_end-S(9).vo_start)/3;
+const JUMPS=[
+ {v:2,over:5,t0:vo(5,.36),d:1.05},
+ {v:4,over:5,t0:vo(6,.17),d:1.05},
+ {v:1,over:6,t0:vo(8,.12),d:.95},
+ {v:1,over:5,t0:vo(8,.12)+1.0,d:.78},
+ {v:1,over:4,t0:vo(8,.12)+1.82,d:.64},
+ {v:1,over:2,t0:vo(8,.12)+2.5,d:.54},
+ {v:3,over:6,t0:S(9).vo_start+.22,d:.95},
+ {v:3,over:5,t0:S(9).vo_start+B9+.22,d:.95},
+ {v:3,over:4,t0:S(9).vo_start+2*B9+.22,d:.95}];
+function layout(t){const order=VALS.slice();let act=null;
+ for(const e of JUMPS){if(t>=e.t0+e.d){const i=order.indexOf(e.v);order[i]=order[i-1];order[i-1]=e.v;}
+  else{if(t>=e.t0)act={e,p:(t-e.t0)/e.d};break;}}
+ return {order,act};}
+const ENTRY0=vo(3,.32);
+const CHEER0=S(10).vo_start+.1;
+function posAt(v,t){
+ const L=layout(t);const idx=L.order.indexOf(v);
+ let x=slotX(idx),y=0,sx=1,sy=1,lean=0;
+ if(L.act){const e=L.act.e,p=L.act.p,ia=L.order.indexOf(e.v),xa=slotX(ia),xb=slotX(ia-1);
+  const H=70;
+  if(v===e.v){
+   if(p<.22){const a=eo(p/.22);sy=1-.24*a;sx=1+.14*a;lean=-6*a;}
+   else if(p<.72){const q=(p-.22)/.5;x=lerp(xa,xb,eio(q));y=-H*Math.sin(Math.PI*q);
+    sy=1+.2*Math.max(0,1-q*2.5)+.1*Math.max(0,(q-.7)/.3);sx=1/Math.sqrt(sy);lean=lerp(-10,8,q);x=x;}
+   else if(p<.86){const a=(p-.72)/.14;x=xb;sy=1-.26*(1-eo(a));sx=1+.18*(1-eo(a));lean=8*(1-a);}
+   else{const a=(p-.86)/.14;x=xb;sy=1+.05*Math.sin(Math.PI*a);sx=1-.03*Math.sin(Math.PI*a);}
+  }else if(v===e.over){
+   if(p>=.22&&p<.72){const q=(p-.22)/.5;x=lerp(xb,xa,eio(q));const f=Math.sin(Math.PI*q);sy=1-.16*f;sx=1+.1*f;lean=9*f;}
+   else if(p>=.72){x=xa;const a=(p-.72)/.28;sy=1+.04*Math.sin(Math.PI*a)*(1-a);}
+   else{x=xb;sy=1-.04*eo(p/.22);}
+  }}
+ // run-in (shot 3)
+ const si=VALS.indexOf(v), e0=ENTRY0+si*.3, ent=(t-e0)/1.25;
+ if(ent<1){const k=c01(ent);x-=(1-eo(k))*1700;y-=Math.abs(Math.sin(k*Math.PI*6))*30*(1-k*.6);lean+=12*(1-k);}
+ else if(ent<1.3){const a=(ent-1)/.3;sy*=1-.18*Math.sin(Math.PI*a);sx*=1+.1*Math.sin(Math.PI*a);lean+=-5*Math.sin(Math.PI*a);}
+ // cheer hops (shot 10)
+ const c0=CHEER0+idx*.09,k=(t-c0)/.55;
+ if(k>=0&&k<3){const f=k-Math.floor(k);y-=75*Math.sin(Math.PI*f);
+  if(f<.12){sy*=1-.18*(1-f/.12);sx*=1+.1*(1-f/.12);}else if(f>.9){sy*=1-.2*((f-.9)/.1);}else{sy*=1.08;sx*=.96;}}
+ else if(k>=3&&k<3.4){const a=(k-3)/.4;sy*=1-.16*Math.sin(Math.PI*a)*(1-a);}
+ sy*=1+.015*Math.sin(t*2.3+v);
+ return {x,y,sx,sy,lean};}
+
+/* acting cues (all from timeline) */
+const LOOKS=[[vo(4,.18),S(4).end-.2,2,-1],[vo(4,.22),S(4).end-.2,5,1],
+ [S(5).start+.1,vo(5,.36),2,-1],[S(5).start+.2,vo(5,.36),5,1],
+ [vo(6,0),vo(6,.17),4,-1],[vo(6,.02),vo(6,.17),5,1],[vo(6,.45),S(6).end-.3,4,-1],[vo(6,.48),S(6).end-.3,2,1],
+ [vo(7,0),vo(7,.4),6,-1],[vo(7,.05),vo(7,.4),5,1],
+ [vo(8,0),vo(8,.12),1,-1],[vo(8,.02),vo(8,.12),6,1],
+ [S(9).vo_start,S(9).vo_start+.22,3,-1],[S(9).vo_start,S(9).vo_start+.22,6,1],
+ [S(9).vo_start+2*B9+1.1,S(9).end,3,-1],[S(9).vo_start+2*B9+1.2,S(9).end,2,1]];
+const SHAKE=[vo(6,.66),vo(6,.66)+1.1];
+const PUFF=[vo(7,.15),vo(7,.95)];
+const ACTIVE=[[vo(4,.1),S(5).end-.2,2],[S(6).start+.1,S(6).end-.3,4],[S(7).start+.15,S(7).end-.4,6],[S(8).start+.15,S(8).end-.4,1],[S(9).start+.1,S(9).end-.5,3]];
+const SORT_EV=[[vo(4,.12),1],[S(5).start+.1,2],[S(6).start+.1,3],[S(7).start+.15,4],[S(8).start+.15,5],[S(9).start+.1,6],
+ [vo(10,.12),1],[vo(10,.24),2],[vo(10,.36),3],[vo(10,.48),4],[vo(10,.6),5],[vo(10,.72),6]];
+function sortedN(t){let n=0,prev=0,k=1;for(const [et,v] of SORT_EV){if(t>=et){prev=n;n=v;k=eio((t-et)/.6);}}return lerp(prev,n,k);}
+function activeAt(t){for(const a of ACTIVE)if(t>=a[0]&&t<a[1])return a;return null;}
+function lookAt(v,t){let L=0;for(const l of LOOKS){if(l[2]!==v)continue;const w=win(t,l[0],l[1],.22);if(w>Math.abs(L))L=w*l[3];}
+ const L2=layout(t);if(L2.act){const e=L2.act.e,p=L2.act.p;if(v===e.v&&p<.8)L=-1;if(v===e.over&&p<.85)L=1;}
+ return L+.12*Math.sin(t*.9+v*1.7);}
+const CH={1:'★',2:'插',3:'入',4:'排',5:'序',6:'★'};
+const FLIP0=vo(11,.05);
+
+function renderMouse(v,t,act,nSorted){
+ const m=mice[v],P=posAt(v,t),Ps=posAt(v,t-.09),Pt=posAt(v,t-.2);
+ m.svg.style.transform='translate('+(P.x-160)+'px,'+(FLOOR-440)+'px)';
+ m.root.setAttribute('transform','translate(0,'+P.y.toFixed(1)+') rotate('+P.lean.toFixed(2)+') scale('+P.sx.toFixed(3)+','+P.sy.toFixed(3)+')');
+ const hs=1-Math.min(.5,-P.y/300);m.sh.style.left=P.x+'px';m.sh.style.transform='scale('+(hs*P.sx)+','+hs+')';m.sh.style.opacity=.4+.6*hs;
+ // sign lags body; tail settles last
+ const sRot=clamp((Ps.x-P.x)*.16+(P.y-Ps.y)*.05,-28,28)+2*Math.sin(t*1.7+v);
+ const sDy=clamp((P.y-Ps.y)*.5,-10,40);
+ const LJ=layout(t).act;let tuck=0,dodge=0;
+ if(LJ){const p=LJ.p;const w=Math.sin(Math.PI*c01((p-.15)/.65));if(v===LJ.e.v)tuck=60*w;if(v===LJ.e.over)dodge=w;}
+ // sign raise in shot 3
+ const r0=vo(3,.78)+VALS.indexOf(v)*.08, raise=eback((t-r0)/.5);
+ m.arm.setAttribute('transform','translate('+(38+dodge*40)+','+(-80+(1-raise)*70+sDy+tuck).toFixed(1)+') rotate('+(sRot+(1-raise)*40+dodge*30).toFixed(2)+')');
+ m.svg.style.zIndex=dodge>0?2:1;m.svg.style.position='absolute';
+ const tRot=clamp((Pt.x-P.x)*.22+(P.y-Pt.y)*.15,-45,45)+6*Math.sin(t*2.1+v*2);
+ m.tail.setAttribute('transform','rotate('+tRot.toFixed(2)+' -52 -36)');
+ // head: look, shake
+ const L=lookAt(v,t);let hr=L*6;
+ if(v===4&&t>SHAKE[0]&&t<SHAKE[1]){const q=(t-SHAKE[0])/(SHAKE[1]-SHAKE[0]);hr+=Math.sin(q*Math.PI*6)*14*Math.sin(Math.PI*q);}
+ const puff=v===6?win(t,PUFF[0],PUFF[1],.35):0;
+ const cheer=t>CHEER0&&t<S(10).end?1:0;
+ m.head.setAttribute('transform','translate('+(L*7).toFixed(1)+','+(-128-puff*10)+') rotate('+(hr-puff*6).toFixed(2)+')');
+ m.chest.setAttribute('transform','translate(0,-62) scale('+(1+.16*puff)+','+(1+.1*puff)+') translate(0,62)');
+ const blink=((t+v*.77)%3.4)<.11?.12:1;
+ const happy=Math.max(puff,cheer);
+ m.eyes.setAttribute('transform','translate('+(L*7).toFixed(1)+',-6) scale(1,'+(happy>.5?0:blink)+') translate(0,6)');
+ m.happy.setAttribute('opacity',happy>.5?1:0);
+ // sign content and colour
+ const idx=layout(t).order.indexOf(v);
+ let fill='#fffaf0',stroke=INK,txt=String(v),fx=1,col=INK;
+ const allGreen=t>=CHEER0+idx*.09;
+ if(t>=vo(4,.12)&&idx<Math.round(nSorted)&&!(act&&act[2]===v)){fill='#d7f0d9';stroke='#3f9a5f';}
+ if(act&&act[2]===v){fill='#ffe2cc';stroke=ACC;}
+ if(allGreen){fill='#d7f0d9';stroke='#3f9a5f';}
+ const f0=FLIP0+idx*.14,q=(t-f0)/.45;
+ if(q>=0){fx=Math.abs(Math.cos(Math.PI*c01(q)));if(q>=.5){txt=CH[v];fill='#fffaf0';stroke=INK;col=(v===1||v===6)?ACC:INK;}}
+ m.sign.setAttribute('transform','translate(0,-222) scale('+Math.max(.02,fx).toFixed(3)+',1)');
+ m.sr.setAttribute('fill',fill);m.sr.setAttribute('stroke',stroke);m.st.textContent=txt;m.st.setAttribute('fill',col);
+ return P;}
+
+/* ---------------- camera ---------------- */
+const CAM=[ // [t0,dur,scale,cx,cy]
+ [S(4).start+.5,1.4,1.32,slotX(.5),600],
+ [vo(4,.9),1.2,1,960,540],
+ [S(5).start+.3,.95,1.42,slotX(.5),610],
+ [S(6).start+.25,1.1,1.3,slotX(1),610],
+ [S(7).start+.1,1.0,1.38,slotX(2.5),610],
+ [S(8).start+.1,.9,1.3,slotX(3.6),610],
+ [JUMPS[5].t0+.55,1.0,1,960,540],
+ [S(9).start+.1,1.0,1.26,slotX(4.3),600],
+ [JUMPS[8].t0+1.0,1.3,1,960,540],
+ [S(11).start+.1,1.6,1.08,960,580]];
+const FOLLOW=[[JUMPS[2].t0-.1,JUMPS[5].t0+.7,1],[JUMPS[6].t0-.1,JUMPS[8].t0+1.0,3]];
+function camAt(t){let s=1,cx=960,cy=540;
+ for(const k of CAM){if(t<k[0])break;const e=eio((t-k[0])/k[1]);s=lerp(s,k[2],e);cx=lerp(cx,k[3],e);cy=lerp(cy,k[4],e);}
+ for(const f of FOLLOW){const w=win(t,f[0],f[1],.6);if(w>0){const fx=posAt(f[2],t-.18).x;cx=lerp(cx,fx,w);}}
+ return {s,cx,cy};}
+
+/* ---------------- cards (shots 1-2) ---------------- */
+const CV=[7,3,9,2,5],CSU=['♥','♠','♦','♣','♥'];
+const cardEls=CV.map((v,i)=>{const d=document.createElement('div');d.className='card';d.innerHTML='<i>'+CSU[i]+'</i>'+v;
+ d.style.color=(CSU[i]==='♥'||CSU[i]==='♦')?'#d9483a':INK;$('cards').appendChild(d);return d;});
+const CE=[{id:1,t0:vo(2,.12),d:.95},{id:3,t0:vo(2,.3),d:1.1},{id:4,t0:vo(2,.48),d:.95}];
+const cardX=i=>960+(i-2)*205;
+function cardOrder(t){let o=[0,1,2,3,4],act=null;const ORD=[[1,0,2,3,4],[3,1,0,2,4],[3,1,4,0,2]];
+ CE.forEach((e,k)=>{if(act)return;if(t>=e.t0+e.d)o=ORD[k];else if(t>=e.t0)act={e,p:(t-e.t0)/e.d,from:o,to:ORD[k]};});
+ return {o,act};}
+const CONGRATS=vo(2,.62);
+function renderCards(t){
+ const show=t<S(3).start+1.2;$('cards').hidden=!show;if(!show)return;
+ const push=1+.08*eio((t-.4)/1.8);$('cards').style.transform='scale('+push+')';
+ const C=cardOrder(t);
+ cardEls.forEach((el,id)=>{let slot=C.o.indexOf(id),x=cardX(slot),y=0,rot=0,sc=1,sy=1,op=1;
+  if(C.act){const a=C.act.from.indexOf(id),b=C.act.to.indexOf(id),p=C.act.p;
+   if(id===C.act.e.id){if(p<.2){y=12*Math.sin(Math.PI*p/.2*.5);x=cardX(a);sy=1-.08*eo(p/.2);}
+    else if(p<.75){const q=(p-.2)/.55;x=lerp(cardX(a),cardX(b),eio(q));y=-210*Math.sin(Math.PI*q);rot=-14*Math.sin(Math.PI*q);}
+    else{const q=(p-.75)/.25;x=cardX(b);sy=1-.12*Math.sin(Math.PI*q);}}
+   else{const q=c01((p-.25)/.5);x=lerp(cardX(a),cardX(b),eio(q));}}
+  // deal-in + messy fan (shot 1), straighten at start of shot 2
+  const d0=.35+id*.16,dk=(t-d0)/.6;y+=(1-eback(dk))*650;op=c01(dk*3);
+  const messy=1-eio((t-S(2).start-.1)/.9);rot+=messy*((id-2)*7+(id%2?5:-4));y+=messy*(id%2?26:-20);
+  // congrats bounce
+  const bk=(t-CONGRATS-slot*.07)/.5;if(bk>0&&bk<1){y-=70*Math.sin(Math.PI*bk);sy*=bk<.15?.9:1.04;}
+  // exit into title (shot 3 transition)
+  const xk=(t-S(3).start-slot*.05)/.6;if(xk>0){y-=ei(xk)*520;sc=1-.35*eio(xk);op*=1-c01(xk);}
+  el.style.transform='translate('+x+'px,'+(560+y)+'px) rotate('+rot+'deg) scale('+sc+','+(sc*sy)+')';el.style.opacity=op;});
+}
+
+/* ---------------- HUD labels ---------------- */
+function fadeEl(el,t,a,b,r){const w=win(t,a,b,r||.3);el.style.opacity=w;el.hidden=w<=0.001;return w;}
+const LABELS=[
+ [S(5).start+.25,S(5).end-.05,()=> '<b>2</b> &lt; <b>5</b> → 换！'],
+ [S(6).start+.2,vo(6,.42),()=> '<b>4</b> &lt; <b>5</b> → 换'],
+ [vo(6,.42),S(6).end-.05,()=> '<b>4</b> &gt; <b>2</b> → 停'],
+ [S(7).start+.2,S(7).end-.05,()=> '<b>6</b> &gt; <b>5</b> → 不动'],
+ [S(8).start+.2,S(8).end-.05,t=>{let n=0;for(let k=2;k<6;k++)if(t>=JUMPS[k].t0+JUMPS[k].d*.72)n++;return '<b>1</b> 连换 <b>'+n+'</b> 次';}],
+ [S(9).start+.2,S(9).end-.05,t=>{const g=['6','5','4'].map((w,k)=>t>=S(9).vo_start+k*B9?'跳过 <b>'+w+'</b>':'<s>跳过 '+w+'</s>');
+   return '<b>3</b>：'+g.join(' · ')+(t>=JUMPS[8].t0+1.0?' → 停':'');}],
+ [S(10).start+.25,S(10).end-.05,()=> '左边这队，<b>一直是排好的</b>']];
+const VOW=[];
+function render(t){
+ t=clamp(t,0,TOTAL);
+ $('bar').style.width=(t/TOTAL*1920)+'px';
+ // subtitle: only inside vo window
+ let line='',sw=0;for(const s of TIMELINE.shots){if(t>=s.vo_start&&t<=s.vo_end){line=s.line;sw=Math.min(c01((t-s.vo_start)/.12),c01((s.vo_end-t)/.12));}}
+ const sub=$('sub');sub.textContent=line;sub.hidden=!line;sub.style.opacity=sw;sub.style.transform='translateX(-50%)';
+ // background breathing + parallax
+ const cam=camAt(t);
+ blobEls.forEach((el,i)=>{const b=BLOBS[i];el.style.transform='translate('+(Math.sin(t/b[4]*2)*24)+'px,'+(Math.cos(t/b[4]*1.6)*18)+'px) scale('+(1+.06*Math.sin(t*6.28/b[4]))+')';el.style.opacity=.75+.25*Math.sin(t*6.28/b[4]+i);});
+ $('bg').style.transform='translate('+(-(cam.cx-960)*.25)+'px,'+(-(cam.cy-540)*.25)+'px) scale('+(1+(cam.s-1)*.25)+')';
+ $('world').style.transform='translate(960px,540px) scale('+cam.s+') translate('+(-cam.cx)+'px,'+(-cam.cy)+'px)';
+ // world fades in with mice (shot 3)
+ renderCards(t);
+ const act=activeAt(t),nS=sortedN(t);
+ const P={};VALS.forEach(v=>P[v]=renderMouse(v,t,act,nS));
+ // zone
+ const z=$('zone');z.hidden=nS<.02;z.style.left=(slotX(0)-100)+'px';z.style.width=Math.max(0,nS*DX+10)+'px';
+ z.style.opacity=c01(nS*2)*(1-c01((t-S(11).start)/.6));
+ const zl=$('zlab');zl.hidden=z.hidden;zl.style.opacity=z.style.opacity;
+ const zsx=960+(slotX(0)-100+18-cam.cx)*cam.s,zsy=540+(448-cam.cy)*cam.s-56;
+ zl.style.transform='translate('+zsx+'px,'+Math.max(270,zsy)+'px)';
+ // arrow over active
+ const ar=$('arrow');if(act){const w=win(t,act[0],act[1],.25),Q=posAt(act[2],t-.06);ar.hidden=false;ar.style.opacity=w;
+  ar.style.transform='translate('+Q.x+'px,'+(FLOOR-372+Math.sin(t*6)*10)+'px) scale('+(.6+.4*eo(w))+')';}else ar.hidden=true;
+ // check (shot 7)
+ const ck=$('check'),c0=vo(7,.55);ck.hidden=t<c0||t>S(7).end;ck.style.left=(P[6].x+110)+'px';ck.style.top=(FLOOR-330)+'px';
+ ck.style.opacity=1-c01((t-S(7).end+.35)/.35);ck.style.transform='scale('+eback((t-c0)/.4)+') rotate('+(-12*(1-eo((t-c0)/.5)))+'deg)';
+ // title (shot 3), rules (shot 4), end card (shot 11)
+ const tw=fadeEl($('title'),t,S(3).start+.25,S(4).start+.25,.5);$('title').style.transform='translateY('+(1-eo(tw))*40+'px)';
+ $('title').querySelector('u').style.transform='scaleX('+eo((t-S(3).vo_start-.3)/.8)+')';$('title').querySelector('u').style.width='560px';
+ const rw=fadeEl($('rules'),t,S(4).start+.3,S(4).end-.05,.3);
+ const chipT=[vo(4,.12),vo(4,.42),vo(4,.75)];
+ [...$('rules').children].forEach((c,i)=>{const k=(t-chipT[i])/.45;c.style.opacity=c01(k*2);c.style.transform='translateY('+(1-eback(k))*-40+'px) scale('+(.85+.15*eback(k))+')';});
+ const ew=fadeEl($('endcard'),t,vo(11,.35),TOTAL+1,.5);$('endcard').style.transform='translateX(-50%) translateY('+(1-eo(ew))*-50+'px)';
+ // compare label + array readout (crossfade between shots)
+ const cmp=$('cmp');let cw=0,html='';for(const L of LABELS){const w=win(t,L[0],L[1],.28);if(w>cw){cw=w;html=L[2](t);}}
+ cmp.innerHTML=html;cmp.hidden=cw<=.001;cmp.style.opacity=cw;cmp.style.transform='translateY('+(1-eo(cw))*24+'px)';
+ const aw=win(t,S(5).start+.2,S(10).end-.05,.3),arr=$('arr');arr.hidden=aw<=.001;arr.style.opacity=aw;
+ if(aw>0){const o=layout(t).order;arr.innerHTML='[ '+o.map(v=>act&&act[2]===v?'<b>'+v+'</b>':v).join(', ')+' ]';}
+}
+window.__layout=t=>layout(t).order.slice();
+window.__state=t=>({order:layout(clamp(Number(t)||0,0,TOTAL)).order.slice()});
+// ---- playback ----
+let stopped=false,t0=null;
+function loop(now){if(stopped)return;if(t0===null)t0=now;const t=(now-t0)/1000;render(t);if(t<TOTAL)requestAnimationFrame(loop);}
+window.seek=function(t){stopped=true;render(Number(t)||0);};
+render(0);requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

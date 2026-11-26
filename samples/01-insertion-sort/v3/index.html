@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>插入排序：小老鼠排队 v3</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#2a2238;overflow:hidden;font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:#f8ecd6;font-variant-numeric:tabular-nums}
+.abs{position:absolute;left:0;top:0}
+#bg{width:1920px;height:1080px;transform-origin:960px 540px}
+#dots{position:absolute;left:-400px;top:-300px;width:2720px;height:1300px;opacity:.5;
+ background-image:radial-gradient(circle,#ead7b6 3px,transparent 3.5px);background-size:56px 56px}
+.blob{position:absolute;border-radius:50%}
+#world{width:1920px;height:1080px;transform-origin:0 0}
+#floor{position:absolute;left:-1400px;top:820px;width:7600px;height:900px;background:#ecc58f;border-top:10px solid #d9a86c}
+.board{position:absolute;top:870px;height:6px;width:300px;border-radius:3px;background:#e0b57c}
+.zone{position:absolute;top:448px;height:396px;border-radius:34px;background:rgba(63,154,95,.14);border:5px dashed #3f9a5f}
+.shadow{position:absolute;top:812px;width:150px;height:22px;margin-left:-75px;border-radius:50%;background:rgba(122,84,46,.28)}
+#mice,#mice2{position:absolute;left:0;top:820px;width:0;height:0}
+.hl{position:absolute;top:432px;width:210px;height:406px;margin-left:-105px;border-radius:40px;transform-origin:50% 100%}
+.hl.ins{border:7px solid #ff7a2f;box-shadow:0 0 0 8px rgba(255,122,47,.18)}
+.hl.cmp{border:6px dashed #3b2a5e}
+#arrow{position:absolute;left:0;top:0;width:0;height:0}
+#arrow div{position:absolute;left:-28px;top:-30px;width:0;height:0;border-left:28px solid transparent;border-right:28px solid transparent;border-top:38px solid #ff7a2f}
+#check{position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:#3f9a5f;color:#fff8ee;font-size:80px;font-weight:900;display:flex;align-items:center;justify-content:center;border:6px solid #fff8ee}
+#cards{width:1920px;height:1080px}
+.card{position:absolute;left:0;top:0;border-radius:20px;background:#fffaf0;border:5px solid #3b2a5e;
+ box-shadow:0 12px 0 rgba(59,42,94,.18);font-weight:900;display:flex;align-items:center;justify-content:center;color:#3b2a5e}
+.card i{position:absolute;left:14px;top:4px;font-style:normal;font-size:36px}
+#title{position:absolute;left:0;right:0;top:600px;text-align:center;font-size:150px;font-weight:900;color:#3b2a5e;letter-spacing:14px}
+#title u{display:block;margin:12px auto 0;width:560px;height:14px;border-radius:7px;background:#ff7a2f;text-decoration:none;transform-origin:0 50%}
+#rules{position:absolute;left:80px;right:80px;top:64px;display:flex;justify-content:center;gap:28px}
+.chip{padding:20px 34px;border-radius:26px;background:#fffaf0;border:5px solid #3b2a5e;font-size:46px;font-weight:700;color:#3b2a5e;white-space:nowrap;box-shadow:0 8px 0 rgba(59,42,94,.15)}
+.chip b{color:#ff7a2f}
+#legend{position:absolute;right:60px;top:300px;display:flex;flex-direction:column;gap:14px;font-size:30px;font-weight:700;color:#3b2a5e}
+#legend span{display:inline-block;width:34px;height:28px;border-radius:8px;margin-right:12px;vertical-align:-4px;border:4px solid}
+#cmp{position:absolute;left:0;right:0;top:56px;text-align:center;font-size:92px;font-weight:900;color:#3b2a5e;white-space:nowrap}
+#cmp b{color:#ff7a2f}
+#cmp em{font-style:normal;color:#3b2a5e}
+#cmp s{text-decoration:none;color:#c9b79a}
+#cmp g{color:#3f9a5f}
+#arr{position:absolute;left:0;right:0;top:186px;text-align:center;font-size:50px;font-weight:700;color:#8a6a48;letter-spacing:4px}
+#arr b{color:#ff7a2f}
+#zlab,#zlab2{position:absolute;left:0;top:0;font-size:38px;font-weight:700;color:#3f9a5f;white-space:nowrap}
+#endcard{position:absolute;left:50%;top:60px;padding:26px 60px;border-radius:30px;background:#3b2a5e;color:#fdf3e1;text-align:center}
+#endcard h2{font-size:80px;letter-spacing:10px}
+#endcard p{font-size:38px;color:#ffc79e;margin-top:6px}
+#sub{position:absolute;left:50%;bottom:48px;max-width:1800px;padding:16px 44px;border-radius:22px;background:rgba(47,36,66,.86);color:#fdf3e1;font-size:46px;line-height:1.4;text-align:center;white-space:nowrap}
+#bar{position:absolute;left:0;bottom:0;height:8px;background:#ff7a2f}
+</style>
+</head>
+<body>
+<div id="stage">
+ <div id="bg" class="abs"><div id="dots"></div></div>
+ <div id="world" class="abs">
+  <div id="floor"></div>
+  <div id="zone" class="zone"></div>
+  <div id="zone2" class="zone"></div>
+  <div id="hls"></div>
+  <div id="shadows"></div>
+  <div id="mice"></div>
+  <div id="mice2"></div>
+  <div id="arrow"><div></div></div>
+  <div id="check">✓</div>
+ </div>
+ <div id="cards" class="abs"></div>
+ <div id="hud" class="abs" style="width:1920px;height:1080px">
+  <div id="title">插入排序<u></u></div>
+  <div id="rules">
+   <div class="chip">① 从<b>第二只</b>开始，往左看</div>
+   <div class="chip">② 比左边小 → <b>换</b></div>
+   <div class="chip">③ 换不动 → <b>停</b></div>
+  </div>
+  <div id="legend">
+   <div><span style="background:#ffe2cc;border-color:#ff7a2f"></span>正在插入</div>
+   <div><span style="background:#d7f0d9;border-color:#3f9a5f"></span>已排好</div>
+   <div><span style="background:#fffaf0;border-color:#3b2a5e"></span>还没轮到</div>
+  </div>
+  <div id="zlab">已排好</div><div id="zlab2">已排好</div>
+  <div id="cmp"></div><div id="arr"></div>
+  <div id="endcard"><h2>插入排序</h2><p>左边一直排好，新来的找位置插进去</p></div>
+  <div id="sub"></div>
+  <div id="bar"></div>
+ </div>
+</div>
+<script>
+// Voice beats: find when a word is spoken in timeline.json, so actions land on it.
+//
+// Usage in an animation page (after embedding TIMELINE = <timeline.json>):
+//   const beats = VoiceBeats(TIMELINE);
+//   beats.at(9, "6")          -> time the first "6" is spoken in shot 9
+//   beats.at(9, "5", 0)       -> nth occurrence (0-based)
+//   beats.all(9, ["6","5","4"]) -> [t6, t5, t4], each searched after the previous
+//   beats.progress(t, a, b)   -> 0..1 between two beat times, clamped
+//
+// Matching is on the concatenated spoken characters, so multi-character phrases
+// ("跳过", "停在") work even though edge-tts reports Chinese one character at a time.
+(function (global) {
+  function VoiceBeats(timeline) {
+    const shots = {};
+    for (const s of timeline.shots) shots[s.shot] = s;
+
+    function find(shotNo, phrase, fromT) {
+      const s = shots[shotNo];
+      if (!s || !s.words || !s.words.length) throw new Error("no words for shot " + shotNo);
+      const ws = s.words.filter((w) => w.t >= (fromT ?? -Infinity));
+      const text = ws.map((w) => w.text).join("");
+      // Map character index in the joined string back to the word that holds it.
+      const owner = [];
+      ws.forEach((w, i) => { for (let k = 0; k < w.text.length; k++) owner.push(i); });
+      const idx = text.indexOf(phrase);
+      if (idx < 0) throw new Error(`"${phrase}" not spoken in shot ${shotNo}`);
+      return ws[owner[idx]].t;
+    }
+
+    return {
+      at(shotNo, phrase, nth = 0) {
+        let t = -Infinity;
+        for (let i = 0; i <= nth; i++) t = find(shotNo, phrase, i === 0 ? undefined : t + 1e-3);
+        return t;
+      },
+      all(shotNo, phrases) {
+        let t;
+        return phrases.map((p) => (t = find(shotNo, p, t === undefined ? undefined : t + 1e-3)));
+      },
+      progress(t, a, b) {
+        return b <= a ? (t >= b ? 1 : 0) : Math.min(1, Math.max(0, (t - a) / (b - a)));
+      },
+    };
+  }
+  global.VoiceBeats = VoiceBeats;
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+/* MouseRig — reusable, parameterized mouse character for code-rendered explainer videos.
+ * Extracted from samples/01-insertion-sort/v2. Plain browser JS, no deps, global `MouseRig`.
+ * Everything is a pure function of its inputs: no Date.now, no Math.random, no state between calls.
+ *
+ * Usage:
+ *   host.innerHTML = MouseRig.svg('m1', {body:'#c7bfd6', scale:1});
+ *   const el = document.getElementById('m1');
+ *   MouseRig.pose(el, MouseRig.compose(base, MouseRig.jumpOver(u,{from:0,to:-190}), MouseRig.idleBreath(t,7)));
+ * Coordinates: origin = point between the feet on the floor; y negative = up. Units = px at scale 1.
+ */
+(function (G) {
+  'use strict';
+  const INK = '#3b2a5e';
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const c01 = (x) => clamp(x, 0, 1);
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const eio = (x) => { x = c01(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+  const eo = (x) => { x = c01(x); return 1 - Math.pow(1 - x, 3); };
+  const ei = (x) => { x = c01(x); return x * x * x; };
+  const bump = (x) => (x <= 0 || x >= 1 ? 0 : Math.sin(Math.PI * x)); // 0→1→0
+  const seg = (u, a, b) => c01((u - a) / (b - a));
+  // seeded hash → [0,1)
+  function hash(n) { let x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+
+  const SIGN_STYLE = {
+    idle: { fill: '#fffaf0', stroke: INK },
+    active: { fill: '#ffe2cc', stroke: '#ff7a2f' },
+    sorted: { fill: '#d7f0d9', stroke: '#3f9a5f' },
+  };
+
+  const DEFAULT = {
+    x: 0, y: 0, squash: 0, lean: 0, headTilt: 0, headTurn: 0,
+    eyes: 'open', blink: 0, mouth: 'smile', chestPuff: 0,
+    signText: '', signState: 'idle', signTilt: 0, signLagX: 0, signLagY: 0, signRaise: 1, signFlip: 1,
+    tailPhase: 0,
+  };
+  const STRING_KEYS = { eyes: 1, mouth: 1, signText: 1, signState: 1 };
+  // channels combined by multiplication rather than addition
+  const MUL_KEYS = { signRaise: 1, signFlip: 1 };
+
+  /* ---------------- markup ---------------- */
+  function svg(id, opts) {
+    const o = Object.assign({ body: '#c7bfd6', ear: '#f5b3c3', belly: '#fff4e4', feet: '#e9a5b8', tail: '#e69aae',
+      stick: '#9a6a3a', ink: INK, scale: 1, sign: true }, opts || {});
+    const s = o.scale, k = o.ink, c = o.body;
+    return '<svg id="' + id + '" class="mouse-rig" data-rig="mouse" width="' + 320 * s + '" height="' + 480 * s +
+      '" viewBox="-160 -440 320 480" style="overflow:visible;position:absolute;left:0;top:0" data-scale="' + s + '">' +
+      '<g data-part="body">' +
+      '<g data-part="tail"><path d="M-52 -36 C-110 -26 -120 -96 -152 -84" stroke="' + o.tail + '" stroke-width="9" fill="none" stroke-linecap="round"/></g>' +
+      '<ellipse cx="-28" cy="-6" rx="20" ry="9" fill="' + o.feet + '" stroke="' + k + '" stroke-width="4"/>' +
+      '<ellipse cx="28" cy="-6" rx="20" ry="9" fill="' + o.feet + '" stroke="' + k + '" stroke-width="4"/>' +
+      '<g data-part="chest"><ellipse cx="0" cy="-62" rx="66" ry="56" fill="' + c + '" stroke="' + k + '" stroke-width="5"/>' +
+      '<ellipse cx="0" cy="-52" rx="40" ry="32" fill="' + o.belly + '" opacity=".65"/></g>' +
+      (o.sign ? '<g data-part="arm"><rect x="-5" y="-176" width="10" height="176" rx="5" fill="' + o.stick + '"/>' +
+        '<g data-part="sign" transform="translate(0,-222)"><rect data-part="signRect" x="-64" y="-54" width="128" height="108" rx="18" fill="#fffaf0" stroke="' + k + '" stroke-width="6"/>' +
+        '<text data-part="signText" x="0" y="25" text-anchor="middle" font-size="74" font-weight="900" fill="' + k + '" style="font-variant-numeric:tabular-nums;font-family:inherit"></text></g></g>' : '') +
+      '<g data-part="head">' +
+      '<g data-part="ears"><circle cx="-46" cy="-40" r="30" fill="' + c + '" stroke="' + k + '" stroke-width="5"/><circle cx="-46" cy="-40" r="15" fill="' + o.ear + '"/>' +
+      '<circle cx="46" cy="-40" r="30" fill="' + c + '" stroke="' + k + '" stroke-width="5"/><circle cx="46" cy="-40" r="15" fill="' + o.ear + '"/></g>' +
+      '<ellipse cx="0" cy="0" rx="56" ry="47" fill="' + c + '" stroke="' + k + '" stroke-width="5"/>' +
+      '<g data-part="face">' +
+      '<g data-part="eyes">' +
+      '<g data-eye="open"><circle cx="-20" cy="-6" r="8" fill="' + k + '"/><circle cx="20" cy="-6" r="8" fill="' + k + '"/><circle cx="-17" cy="-9" r="2.6" fill="#fffaf0"/><circle cx="23" cy="-9" r="2.6" fill="#fffaf0"/></g>' +
+      '<g data-eye="wide"><circle cx="-20" cy="-7" r="11" fill="#fffaf0" stroke="' + k + '" stroke-width="3"/><circle cx="20" cy="-7" r="11" fill="#fffaf0" stroke="' + k + '" stroke-width="3"/><circle cx="-20" cy="-7" r="5" fill="' + k + '"/><circle cx="20" cy="-7" r="5" fill="' + k + '"/></g>' +
+      '<g data-eye="happy"><path d="M-30 -4 q10 -12 20 0 M10 -4 q10 -12 20 0" stroke="' + k + '" stroke-width="5" fill="none" stroke-linecap="round"/></g>' +
+      '<g data-eye="closed"><path d="M-29 -5 h18 M11 -5 h18" stroke="' + k + '" stroke-width="5" fill="none" stroke-linecap="round"/></g>' +
+      '</g>' +
+      '<circle cx="-34" cy="14" r="9" fill="#f08aa6" opacity=".45"/><circle cx="34" cy="14" r="9" fill="#f08aa6" opacity=".45"/>' +
+      '<circle cx="0" cy="12" r="8" fill="#e5708f"/>' +
+      '<g data-part="mouth">' +
+      '<path data-mouth="smile" d="M-9 24 q9 8 18 0" stroke="' + k + '" stroke-width="3.5" fill="none" stroke-linecap="round"/>' +
+      '<ellipse data-mouth="o" cx="0" cy="27" rx="6" ry="7" fill="' + k + '"/>' +
+      '<path data-mouth="flat" d="M-8 26 h16" stroke="' + k + '" stroke-width="3.5" fill="none" stroke-linecap="round"/>' +
+      '</g>' +
+      '<path d="M-24 14 l-34 -5 M-24 20 l-34 6 M24 14 l34 -5 M24 20 l34 6" stroke="' + k + '" stroke-width="3" stroke-linecap="round"/>' +
+      '</g></g>' +
+      '<circle data-part="hand" cx="0" cy="-78" r="11" fill="' + c + '" stroke="' + k + '" stroke-width="4"/>' +
+      '</g></svg>';
+  }
+
+  /* ---------------- pose application ---------------- */
+  function parts(el) {
+    if (el.__rigParts) return el.__rigParts; // DOM cache only; no animation state
+    const q = (n) => el.querySelector('[data-part="' + n + '"]');
+    const p = { body: q('body'), tail: q('tail'), chest: q('chest'), arm: q('arm'), sign: q('sign'), signRect: q('signRect'),
+      signText: q('signText'), head: q('head'), face: q('face'), eyes: q('eyes'), mouth: q('mouth'), hand: q('hand'),
+      eye: {}, mouthV: {} };
+    el.querySelectorAll('[data-eye]').forEach((g) => (p.eye[g.getAttribute('data-eye')] = g));
+    el.querySelectorAll('[data-mouth]').forEach((g) => (p.mouthV[g.getAttribute('data-mouth')] = g));
+    el.__rigParts = p;
+    return p;
+  }
+  const f = (n, d) => Number(n).toFixed(d == null ? 2 : d);
+
+  function pose(el, pIn) {
+    const p = Object.assign({}, DEFAULT, pIn || {});
+    const P = parts(el), s = Number(el.getAttribute('data-scale')) || 1;
+    // root placement: feet at (x,y) in parent pixels
+    el.style.transform = 'translate(' + f(p.x - 160 * s, 1) + 'px,' + f(-440 * s, 1) + 'px)';
+    // squash: + compress, − stretch; area-preserving-ish (sx = sy^-0.5), pivot at feet
+    const sq = clamp(p.squash, -1, 1), sy = 1 - 0.3 * sq, sx = Math.pow(sy, -0.5);
+    P.body.setAttribute('transform', 'translate(0,' + f(p.y, 1) + ') rotate(' + f(p.lean) + ') scale(' + f(sx, 3) + ',' + f(sy, 3) + ')');
+    // head: turn shifts face, tilt rotates, chest puff lifts it
+    const puff = c01(p.chestPuff), turn = clamp(p.headTurn, -1, 1);
+    P.head.setAttribute('transform', 'translate(' + f(turn * 7, 1) + ',' + f(-128 - puff * 10, 1) + ') rotate(' + f(p.headTilt - puff * 6) + ')');
+    P.face.setAttribute('transform', 'translate(' + f(turn * 7, 1) + ',0)');
+    P.chest.setAttribute('transform', 'translate(0,-62) scale(' + f(1 + 0.16 * puff, 3) + ',' + f(1 + 0.1 * puff, 3) + ') translate(0,62)');
+    // eyes + blink (blink squashes the active eye shape vertically)
+    const eyes = p.eyes in P.eye ? p.eyes : 'open';
+    for (const k in P.eye) P.eye[k].setAttribute('opacity', k === eyes ? 1 : 0);
+    const b = c01(p.blink), ey = eyes === 'closed' || eyes === 'happy' ? 1 : Math.max(0.08, 1 - b);
+    P.eyes.setAttribute('transform', 'translate(0,-6) scale(1,' + f(ey, 3) + ') translate(0,6)');
+    const mouth = p.mouth in P.mouthV ? p.mouth : 'smile';
+    for (const k in P.mouthV) P.mouthV[k].setAttribute('opacity', k === mouth ? 1 : 0);
+    // sign: lag offsets + tilt, raise (0 lowered … 1 up), flip (scaleX for card-flip reveals)
+    if (P.arm) {
+      const r = c01(p.signRaise);
+      P.arm.setAttribute('transform', 'translate(' + f(38 + p.signLagX, 1) + ',' + f(-80 + (1 - r) * 70 + p.signLagY, 1) + ') rotate(' + f(p.signTilt + (1 - r) * 40) + ')');
+      P.sign.setAttribute('transform', 'translate(0,-222) scale(' + f(Math.max(0.02, Math.abs(p.signFlip)), 3) + ',1)');
+      const st = SIGN_STYLE[p.signState] || SIGN_STYLE.idle;
+      P.signRect.setAttribute('fill', st.fill); P.signRect.setAttribute('stroke', st.stroke);
+      if (P.signText.textContent !== String(p.signText)) P.signText.textContent = String(p.signText);
+    }
+    // tail: tailPhase is a rotation in degrees around the tail root
+    P.tail.setAttribute('transform', 'rotate(' + f(clamp(p.tailPhase, -50, 50)) + ' -52 -36)');
+    return p;
+  }
+
+  /* ---------------- composition ---------------- */
+  // pose = base + Σ deltas. Numbers add (signRaise/signFlip multiply); strings: last non-empty wins.
+  function compose(base) {
+    const out = Object.assign({}, DEFAULT, base || {});
+    for (let i = 1; i < arguments.length; i++) {
+      const d = arguments[i]; if (!d) continue;
+      for (const k in d) {
+        if (STRING_KEYS[k]) { if (d[k]) out[k] = d[k]; }
+        else if (MUL_KEYS[k]) out[k] = out[k] * d[k];
+        else out[k] = (out[k] || 0) + d[k];
+      }
+    }
+    return out;
+  }
+
+  /* ---------------- actions: pure fns of local progress u∈[0,1] → pose delta ---------------- */
+  // Phase table (fractions of duration). Recommended duration 0.9–1.1 s; chained repeats may shrink to 0.55 s.
+  const JUMP_PH = { antic: 0.22, land: 0.72, settle: 0.86 };
+  function jumpBody(u, o) {
+    const from = o.from || 0, to = o.to == null ? -190 : o.to, H = o.height == null ? 70 : o.height, dir = Math.sign(to - from) || 1;
+    let x = from, y = 0, sq = 0, lean = 0;
+    if (u <= 0) return { x, y, sq, lean };
+    if (u >= 1) return { x: to, y, sq, lean };
+    if (u < JUMP_PH.antic) { // anticipation: crouch, lean back against travel
+      const a = eo(u / JUMP_PH.antic); sq = 0.8 * a; lean = -6 * a * dir;
+    } else if (u < JUMP_PH.land) { // launch + arc: stretch on takeoff, hang near apex, stretch into contact
+      const q = (u - JUMP_PH.antic) / (JUMP_PH.land - JUMP_PH.antic);
+      x = lerp(from, to, eio(q)); y = -H * Math.sin(Math.PI * q);
+      sq = -(0.67 * Math.max(0, 1 - q * 2.5) + 0.33 * Math.max(0, (q - 0.7) / 0.3));
+      lean = lerp(-10, 8, q) * dir;
+    } else if (u < JUMP_PH.settle) { // land squash, recovering
+      const a = (u - JUMP_PH.land) / (JUMP_PH.settle - JUMP_PH.land); x = to; sq = 0.87 * (1 - eo(a)); lean = 8 * (1 - a) * dir;
+    } else { // overshoot (small stretch) → settle
+      const a = (u - JUMP_PH.settle) / (1 - JUMP_PH.settle); x = to; sq = -0.17 * bump(a);
+    }
+    return { x, y, sq, lean };
+  }
+  // Secondary channels are derived from the body itself sampled slightly earlier (lag), so they start later and settle later.
+  function jumpOver(u, opts) {
+    const o = opts || {}, B = jumpBody(u, o), Bs = jumpBody(u - 0.09, o), Bt = jumpBody(u - 0.2, o);
+    const tuck = 60 * bump(seg(u, 0.15, 0.8)); // sign pulled down to clear neighbours mid-air
+    return {
+      x: B.x, y: B.y, squash: B.sq, lean: B.lean,
+      headTurn: u > 0 && u < 0.8 ? Math.sign((o.to == null ? -190 : o.to) - (o.from || 0)) : 0,
+      eyes: B.y < -20 ? 'wide' : '', mouth: B.y < -20 ? 'o' : '',
+      signTilt: clamp((Bs.x - B.x) * 0.16 + (B.y - Bs.y) * 0.05, -28, 28),
+      signLagY: clamp((B.y - Bs.y) * 0.5, -10, 40) + tuck,
+      tailPhase: clamp((Bt.x - B.x) * 0.22 + (B.y - Bt.y) * 0.15, -45, 45),
+    };
+  }
+  // Neighbour being jumped over: ducks and slides the other way (use with the same u and swapped from/to).
+  function duck(u, opts) {
+    const o = opts || {}, from = o.from || 0, to = o.to == null ? 190 : o.to;
+    const q = seg(u, JUMP_PH.antic, JUMP_PH.land), w = bump(q);
+    return { x: u < JUMP_PH.antic ? from : lerp(from, to, eio(q)), squash: 0.5 * w + 0.13 * eo(u / JUMP_PH.antic) * (u < JUMP_PH.antic ? 1 : 0),
+      lean: 9 * w * Math.sign(to - from), signLagX: 40 * w, signTilt: 30 * w, headTurn: -Math.sign(to - from) * (u < 0.85 ? 1 : 0) };
+  }
+  // Flinch (0.4–0.6 s): fast recoil back + wide eyes, slower recovery.
+  function flinch(u, opts) {
+    const dir = (opts && opts.dir) || 1, hit = u < 0.18 ? eo(u / 0.18) : 1 - eio((u - 0.18) / 0.82);
+    return { x: -14 * hit * dir, squash: 0.35 * hit, lean: -12 * hit * dir, headTilt: -8 * hit * dir,
+      eyes: hit > 0.3 ? 'wide' : '', mouth: hit > 0.3 ? 'o' : '', signLagX: -10 * hit * dir, signTilt: -10 * hit * dir,
+      tailPhase: 20 * Math.sin(Math.PI * 3 * u) * (1 - u) };
+  }
+  // Head shake "no" (0.9–1.2 s): sin oscillation under an envelope.
+  function shakeHead(u, times) {
+    const n = times || 3, env = bump(u);
+    return { headTilt: Math.sin(u * Math.PI * 2 * n) * 14 * env, headTurn: Math.sin(u * Math.PI * 2 * n) * 0.4 * env,
+      eyes: env > 0.2 ? 'closed' : '', mouth: env > 0.2 ? 'flat' : '', signTilt: -Math.sin((u - 0.08) * Math.PI * 2 * n) * 4 * env };
+  }
+  // Chest puff / proud (hold 1.5–3 s): eased in, held, eased out.
+  function puffChest(u) {
+    const w = eio(u / 0.2) * (1 - eio((u - 0.8) / 0.2));
+    return { chestPuff: w, lean: -3 * w, eyes: w > 0.5 ? 'happy' : '', squash: -0.1 * w };
+  }
+  // Cheer (0.55 s per hop; pass u over N hops via u = k/N): crouch → hop → land.
+  function cheer(u, hops) {
+    const n = hops || 1, k = c01(u) * n, fr = k - Math.floor(k);
+    if (u <= 0 || u >= 1) return {};
+    let sq = -0.27;
+    if (fr < 0.12) sq = 0.6 * (1 - fr / 0.12); else if (fr > 0.9) sq = 0.67 * ((fr - 0.9) / 0.1);
+    return { y: -75 * Math.sin(Math.PI * fr), squash: sq, eyes: 'happy', mouth: 'o', signLagY: -12 * Math.sin(Math.PI * (fr - 0.1)),
+      tailPhase: 18 * Math.sin(Math.PI * 2 * fr) };
+  }
+  // Look at a side (dir −1 left / +1 right) for the window u∈[0,1]; ease in/out over ~0.22 of the window.
+  function lookAt(u, dir) {
+    const w = eio(u / 0.2) * (1 - eio((u - 0.8) / 0.2));
+    return { headTurn: w * (dir || 1), headTilt: 3 * w * (dir || 1) };
+  }
+  // Idle breathing: always on, tiny, seeded so neighbours never sync.
+  function idleBreath(t, seed) {
+    const s = seed || 0, ph = hash(s) * 6.283, sp = 2.1 + hash(s + 1) * 0.5;
+    return { squash: -0.05 * Math.sin(t * sp + ph), headTurn: 0.12 * Math.sin(t * 0.9 + s * 1.7), signTilt: 2 * Math.sin(t * 1.7 + ph),
+      tailPhase: 6 * Math.sin(t * 2.1 + ph * 2) };
+  }
+  // Blink: deterministic schedule (period 2.8–4.2 s per seed), 0.12 s close/open.
+  function blinkAt(t, seed) {
+    const s = seed || 0, per = 2.8 + hash(s + 3) * 1.4, off = hash(s + 5) * per, ph = ((t + off) % per + per) % per;
+    return { blink: ph < 0.12 ? bump(ph / 0.12) : 0 };
+  }
+  // Local progress of an action window: returns u, or null outside [t0, t0+d] (pass to compose → skipped).
+  function local(t, t0, d) { return t < t0 || t > t0 + d ? null : (t - t0) / d; }
+  function shadow(p) { const h = 1 - Math.min(0.5, -p.y / 300); return { x: p.x, scaleX: h * Math.pow(1 - 0.3 * clamp(p.squash, -1, 1), -0.5), scaleY: h, opacity: 0.4 + 0.6 * h }; }
+
+  G.MouseRig = { svg, pose, compose, DEFAULT, jumpOver, duck, flinch, shakeHead, puffChest, cheer, lookAt, idleBreath, blinkAt,
+    local, shadow, hash, ease: { eio, eo, ei, bump, lerp, clamp, c01 }, JUMP_PHASES: JUMP_PH };
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+(function(){
+const TIMELINE={"total":71.352,"voice":"zh-CN-XiaoyiNeural","shots":[{"shot":1,"start":0.0,"end":4.112,"vo_start":0.3,"vo_end":3.612,"line":"打扑克的时候，你是怎么理牌的？","visual":"一手乱序扑克牌摊开，镜头缓推","words":[{"t":0.398,"d":0.179,"text":"打"},{"t":0.576,"d":0.369,"text":"扑克"},{"t":0.945,"d":0.083,"text":"的"},{"t":1.04,"d":0.464,"text":"时候"},{"t":1.707,"d":0.095,"text":"你"},{"t":1.802,"d":0.095,"text":"是"},{"t":1.91,"d":0.238,"text":"怎么"},{"t":2.16,"d":0.381,"text":"理牌"},{"t":2.54,"d":0.238,"text":"的"}]},{"shot":2,"start":4.112,"end":11.824,"vo_start":4.412,"vo_end":11.324,"line":"大多数人会一张一张拿起来，插到合适的位置。恭喜你，你已经会一个算法了！","visual":"牌一张张弧线插入变有序；「恭喜」时牌面一齐弹一下","words":[{"t":4.51,"d":0.726,"text":"大多数人"},{"t":5.248,"d":0.167,"text":"会"},{"t":5.426,"d":0.107,"text":"一"},{"t":5.533,"d":0.155,"text":"张"},{"t":5.7,"d":0.095,"text":"一"},{"t":5.795,"d":0.143,"text":"张"},{"t":5.95,"d":0.19,"text":"拿"},{"t":6.141,"d":0.333,"text":"起来"},{"t":6.712,"d":0.31,"text":"插到"},{"t":7.033,"d":0.369,"text":"合适"},{"t":7.402,"d":0.083,"text":"的"},{"t":7.498,"d":0.429,"text":"位置"},{"t":8.46,"d":0.345,"text":"恭喜"},{"t":8.805,"d":0.226,"text":"你"},{"t":9.269,"d":0.095,"text":"你"},{"t":9.376,"d":0.226,"text":"已经"},{"t":9.614,"d":0.167,"text":"会"},{"t":9.781,"d":0.143,"text":"一个"},{"t":9.936,"d":0.369,"text":"算法"},{"t":10.305,"d":0.19,"text":"了"}]},{"shot":3,"start":11.824,"end":17.328,"vo_start":12.124,"vo_end":16.828,"line":"它叫插入排序。今天请六只小老鼠来演示。","visual":"六只小老鼠依次跑进场；扑克牌飞上去，变成它们举着的数字牌 5 2 4 6 1 3","words":[{"t":12.222,"d":0.167,"text":"它"},{"t":12.388,"d":0.167,"text":"叫"},{"t":12.567,"d":0.333,"text":"插入"},{"t":12.912,"d":0.512,"text":"排序"},{"t":13.957,"d":0.5,"text":"今天"},{"t":14.469,"d":0.155,"text":"请"},{"t":14.636,"d":0.274,"text":"六只"},{"t":14.922,"d":0.167,"text":"小"},{"t":15.088,"d":0.321,"text":"老鼠"},{"t":15.422,"d":0.107,"text":"来"},{"t":15.541,"d":0.464,"text":"演示"}]},{"shot":4,"start":17.328,"end":25.616,"vo_start":17.628,"vo_end":25.116,"line":"规则就一条：从第二只开始往左看，数字比左边小，就换位置；换不动，就停。","visual":"镜头推近第二只；规则逐句出现","words":[{"t":17.726,"d":0.405,"text":"规则"},{"t":18.142,"d":0.143,"text":"就"},{"t":18.285,"d":0.452,"text":"一条"},{"t":18.928,"d":0.214,"text":"从"},{"t":19.154,"d":0.25,"text":"第二"},{"t":19.416,"d":0.155,"text":"只"},{"t":19.583,"d":0.274,"text":"开始"},{"t":19.868,"d":0.202,"text":"往"},{"t":20.071,"d":0.155,"text":"左"},{"t":20.238,"d":0.238,"text":"看"},{"t":20.726,"d":0.393,"text":"数字"},{"t":21.13,"d":0.131,"text":"比"},{"t":21.273,"d":0.357,"text":"左边"},{"t":21.63,"d":0.262,"text":"小"},{"t":22.071,"d":0.167,"text":"就"},{"t":22.238,"d":0.167,"text":"换"},{"t":22.416,"d":0.429,"text":"位置"},{"t":23.011,"d":0.238,"text":"换"},{"t":23.249,"d":0.095,"text":"不"},{"t":23.345,"d":0.202,"text":"动"},{"t":23.761,"d":0.179,"text":"就"},{"t":23.94,"d":0.357,"text":"停"}]},{"shot":5,"start":25.616,"end":28.672,"vo_start":25.916,"vo_end":28.172,"line":"2 比 5 小，换！","visual":"先描边 2 和 5、停半拍；两只对视 → 2 下蹲、跳过 5、落地 → 2 5 4 6 1 3","words":[{"t":26.014,"d":0.488,"text":"2 比 5"},{"t":26.502,"d":0.274,"text":"小"},{"t":27.026,"d":0.321,"text":"换"}]},{"shot":6,"start":28.672,"end":34.128,"vo_start":28.972,"vo_end":33.628,"line":"4 比 5 小，换；再看 2，比 2 大，停。","visual":"4 跳过 5；看向 2，摇头停下 → 2 4 5 6 1 3","words":[{"t":29.07,"d":0.607,"text":"4 比 5"},{"t":29.677,"d":0.298,"text":"小"},{"t":30.165,"d":0.31,"text":"换"},{"t":30.712,"d":0.167,"text":"再"},{"t":30.879,"d":0.19,"text":"看"},{"t":31.082,"d":0.19,"text":"2"},{"t":31.534,"d":0.143,"text":"比"},{"t":31.677,"d":0.167,"text":"2"},{"t":31.843,"d":0.25,"text":"大"},{"t":32.427,"d":0.369,"text":"停"}]},{"shot":7,"start":34.128,"end":38.528,"vo_start":34.428,"vo_end":38.028,"line":"6 比 5 大，原地不动，轻松。","visual":"6 挺胸，打勾","words":[{"t":34.526,"d":0.571,"text":"6 比 5"},{"t":35.097,"d":0.262,"text":"大"},{"t":35.645,"d":0.393,"text":"原地"},{"t":36.049,"d":0.167,"text":"不"},{"t":36.216,"d":0.238,"text":"动"},{"t":36.704,"d":0.488,"text":"轻松"}]},{"shot":8,"start":38.528,"end":43.456,"vo_start":38.828,"vo_end":42.956,"line":"1 最小，一口气换了四次，换到最前面！","visual":"镜头跟着 1 连跳四次，越跳越快 → 1 2 4 5 6 3","words":[{"t":38.926,"d":0.179,"text":"1"},{"t":39.104,"d":0.417,"text":"最小"},{"t":39.735,"d":0.524,"text":"一口气"},{"t":40.271,"d":0.179,"text":"换"},{"t":40.449,"d":0.071,"text":"了"},{"t":40.533,"d":0.238,"text":"四"},{"t":40.771,"d":0.25,"text":"次"},{"t":41.223,"d":0.286,"text":"换到"},{"t":41.521,"d":0.179,"text":"最"},{"t":41.699,"d":0.417,"text":"前面"}]},{"shot":9,"start":43.456,"end":49.536,"vo_start":43.756,"vo_end":49.036,"line":"最后是 3：跳过 6，跳过 5，跳过 4，停在 2 后面。","visual":"3 逐个跳过，每跳一次点名；看到 2 停下 → 1 2 3 4 5 6","words":[{"t":43.854,"d":0.393,"text":"最后"},{"t":44.258,"d":0.143,"text":"是"},{"t":44.401,"d":0.31,"text":"3"},{"t":44.949,"d":0.19,"text":"跳"},{"t":45.139,"d":0.107,"text":"过"},{"t":45.246,"d":0.25,"text":"6"},{"t":45.746,"d":0.202,"text":"跳"},{"t":45.949,"d":0.119,"text":"过"},{"t":46.068,"d":0.238,"text":"5"},{"t":46.496,"d":0.202,"text":"跳"},{"t":46.699,"d":0.095,"text":"过"},{"t":46.794,"d":0.298,"text":"4"},{"t":47.342,"d":0.202,"text":"停"},{"t":47.544,"d":0.119,"text":"在"},{"t":47.675,"d":0.131,"text":"2"},{"t":47.806,"d":0.405,"text":"后面"}]},{"shot":10,"start":49.536,"end":57.704,"vo_start":49.836,"vo_end":57.204,"line":"排好了！发现没有？左边这队一直是排好的，新来的只要找到位置插进去。","visual":"全体变绿欢呼；回放「已排好」区域从左向右变长","words":[{"t":49.934,"d":0.167,"text":"排"},{"t":50.1,"d":0.19,"text":"好"},{"t":50.291,"d":0.19,"text":"了"},{"t":51.015,"d":0.369,"text":"发现"},{"t":51.396,"d":0.321,"text":"没有"},{"t":52.253,"d":0.464,"text":"左边"},{"t":52.729,"d":0.119,"text":"这"},{"t":52.848,"d":0.143,"text":"队"},{"t":53.003,"d":0.238,"text":"一直"},{"t":53.253,"d":0.095,"text":"是"},{"t":53.36,"d":0.214,"text":"排"},{"t":53.574,"d":0.214,"text":"好"},{"t":53.788,"d":0.202,"text":"的"},{"t":54.265,"d":0.381,"text":"新来"},{"t":54.646,"d":0.19,"text":"的"},{"t":54.943,"d":0.226,"text":"只要"},{"t":55.181,"d":0.262,"text":"找到"},{"t":55.455,"d":0.262,"text":"位置"},{"t":55.729,"d":0.238,"text":"插"},{"t":55.967,"d":0.393,"text":"进去"}]},{"shot":11,"start":57.704,"end":65.392,"vo_start":58.004,"vo_end":64.892,"line":"那如果队伍本来就排好了呢？每只看一眼左边，一次都不用换，一下就结束。","visual":"换一排新老鼠 1 2 3 4 5 6；每只依次往左看一眼、点头，全队迅速变绿","words":[{"t":58.102,"d":0.167,"text":"那"},{"t":58.28,"d":0.286,"text":"如果"},{"t":58.578,"d":0.345,"text":"队伍"},{"t":58.935,"d":0.333,"text":"本来"},{"t":59.28,"d":0.119,"text":"就"},{"t":59.399,"d":0.179,"text":"排"},{"t":59.578,"d":0.19,"text":"好"},{"t":59.768,"d":0.083,"text":"了"},{"t":59.852,"d":0.19,"text":"呢"},{"t":60.575,"d":0.202,"text":"每"},{"t":60.778,"d":0.131,"text":"只"},{"t":60.909,"d":0.167,"text":"看"},{"t":61.087,"d":0.071,"text":"一"},{"t":61.159,"d":0.143,"text":"眼"},{"t":61.314,"d":0.452,"text":"左边"},{"t":61.98,"d":0.321,"text":"一次"},{"t":62.314,"d":0.107,"text":"都"},{"t":62.433,"d":0.25,"text":"不用"},{"t":62.683,"d":0.25,"text":"换"},{"t":63.171,"d":0.333,"text":"一下"},{"t":63.516,"d":0.107,"text":"就"},{"t":63.635,"d":0.417,"text":"结束"}]},{"shot":12,"start":65.392,"end":71.352,"vo_start":65.692,"vo_end":70.852,"line":"这就是插入排序。下次理牌的时候，你就是一台电脑。","visual":"回到原来那排；老鼠举牌排成「插入排序」；收尾字卡","words":[{"t":65.79,"d":0.19,"text":"这"},{"t":65.98,"d":0.131,"text":"就"},{"t":66.111,"d":0.095,"text":"是"},{"t":66.218,"d":0.286,"text":"插入"},{"t":66.516,"d":0.524,"text":"排序"},{"t":67.573,"d":0.25,"text":"下"},{"t":67.823,"d":0.452,"text":"次理牌"},{"t":68.275,"d":0.083,"text":"的"},{"t":68.371,"d":0.44,"text":"时候"},{"t":69.002,"d":0.107,"text":"你"},{"t":69.109,"d":0.131,"text":"就"},{"t":69.24,"d":0.095,"text":"是"},{"t":69.347,"d":0.083,"text":"一"},{"t":69.43,"d":0.155,"text":"台"},{"t":69.597,"d":0.417,"text":"电脑"}]}]};
+const TOTAL=TIMELINE.total, S=n=>TIMELINE.shots[n-1];
+const BT=VoiceBeats(TIMELINE);
+const W=(shot,ph,n)=>BT.at(shot,ph,n||0);   // time a phrase is spoken
+const R=MouseRig;
+const stage=document.getElementById('stage');
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform='scale('+s+')';stage.style.left=(innerWidth-1920*s)/2+'px';stage.style.top=(innerHeight-1080*s)/2+'px';}
+addEventListener('resize',fit);fit();
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)), c01=x=>clamp(x,0,1);
+const lerp=(a,b,k)=>a+(b-a)*k;
+const eio=x=>{x=c01(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;};
+const eo=x=>{x=c01(x);return 1-Math.pow(1-x,3);};
+const ei=x=>{x=c01(x);return x*x*x;};
+const eback=x=>{x=c01(x);const c=1.7;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);};
+const win=(t,a,b,r)=>eio((t-a)/r)*(1-eio((t-b+r)/r));
+const INK='#3b2a5e';
+
+/* ---------------- background: 4 breathing blobs + floor boards ---------------- */
+const BLOBS=[[260,230,380,'#ffe1bd',7.3],[1650,190,320,'#fbd6c6',8.9],[1480,620,260,'#ffe8c9',6.1],[420,640,220,'#f6dcc0',9.7]];
+const blobEls=BLOBS.map(b=>{const d=document.createElement('div');d.className='blob';
+ d.style.cssText='left:'+(b[0]-b[2])+'px;top:'+(b[1]-b[2])+'px;width:'+2*b[2]+'px;height:'+2*b[2]+'px;background:radial-gradient(circle,'+b[3]+' 0%,'+b[3]+' 45%,rgba(248,236,214,0) 70%)';
+ $('bg').appendChild(d);return d;});
+for(let i=0;i<22;i++){const d=document.createElement('div');d.className='board';d.style.left=(-1200+i*340+(i%2)*90)+'px';d.style.top=(870+(i%3)*70)+'px';$('world').insertBefore(d,$('zone'));}
+
+/* ---------------- mice (main row + demo row) ---------------- */
+const VALS=[5,2,4,6,1,3];
+const FUR={5:'#c7bfd6',2:'#d6b896',4:'#b4c3d6',6:'#dcbccb',1:'#c3cfa9',3:'#d6c79c'};
+const FUR2={1:'#d9c3a5',2:'#bcc9b7',3:'#cdbfdc',4:'#e0c2b4',5:'#b9c7d9',6:'#d8cfa2'};
+const DX=190, FLOOR=820, slotX=i=>960+(i-2.5)*DX;
+const DEMO_OFF=2700, slotX2=i=>slotX(i)+DEMO_OFF;
+function mkMouse(host,id,body){const w=document.createElement('div');w.innerHTML=R.svg(id,{body});const el=w.firstChild;$(host).appendChild(el);
+ const sh=document.createElement('div');sh.className='shadow';$('shadows').appendChild(sh);return {el,sh};}
+const mice={},demo={};
+VALS.forEach(v=>mice[v]=mkMouse('mice','m'+v,FUR[v]));
+[1,2,3,4,5,6].forEach(v=>demo[v]=mkMouse('mice2','d'+v,FUR2[v]));
+
+/* ---------------- beat-timed events ---------------- */
+const LANDF=R.JUMP_PHASES.land;            // jump touches down at u=0.72
+const jumpLanding=(v,over,landT,d)=>({v,over,t0:landT-LANDF*d,d});
+// shot 5: 2 lands on 「换」
+const J5=jumpLanding(2,5,W(5,'换'),1.05);
+// shot 6: 4 lands on 「换」
+const J6=jumpLanding(4,5,W(6,'换'),1.05);
+// shot 8: four chained jumps, accelerating, last landing on 「最前面」
+const D8=[.85,.70,.58,.50], L8=W(8,'最前面');
+const J8=[];{let t0=L8-LANDF*D8[3]-(D8[0]+D8[1]+D8[2]);const ov=[6,5,4,2];D8.forEach((d,k)=>{J8.push({v:1,over:ov[k],t0,d});t0+=d;});}
+// shot 9: each jump lands on the number after 「跳过」, stop on 「停在」
+const [tS6,tS5,tS4,tStop]=BT.all(9,['跳过6','跳过5','跳过4','停在']);
+const n9=[W(9,'6'),W(9,'5'),W(9,'4')];
+const J9=[jumpLanding(3,6,n9[0],.6),jumpLanding(3,5,n9[1],.6),jumpLanding(3,4,n9[2],.6)];
+const JUMPS=[J5,J6,...J8,...J9];
+
+function layout(t){const order=VALS.slice();let act=null;
+ for(const e of JUMPS){if(t>=e.t0+e.d){const i=order.indexOf(e.v);order[i]=order[i-1];order[i-1]=e.v;}
+  else{if(t>=e.t0)act={e,u:(t-e.t0)/e.d};break;}}
+ return {order,act};}
+
+// R7 outlines: [inserter, compared, from, to]
+const land=e=>e.t0+LANDF*e.d;
+const OUTL=[ // [inserter, compared, show, hide]; hide by jump launch
+ [2,5,S(5).start+.15,J5.t0+.1],
+ [4,5,S(6).start+.15,J6.t0+.1],
+ [4,2,W(6,'看')-.05,W(6,'停')+.5],
+ [6,5,W(7,'6')-.1,W(7,'不动')+.3],
+ [1,6,J8[0].t0-.7,J8[0].t0+.1],
+ [3,6,W(9,'3')-.2,J9[0].t0+.1],[3,5,land(J9[0])-.1,J9[1].t0+.1],[3,4,land(J9[1])-.1,J9[2].t0+.1],
+ [3,2,tStop-.15,S(9).end-.25]];
+// orange "being inserted" windows
+const ACTIVE=[[W(4,'第二'),S(5).end-.15,2],[S(6).start+.1,S(6).end-.25,4],[S(7).start+.1,S(7).end-.3,6],[S(8).start+.1,S(8).end-.3,1],[S(9).start+.1,S(9).end-.3,3]];
+function activeAt(t){for(const a of ACTIVE)if(t>=a[0]&&t<a[1])return a;return null;}
+// sorted zone covers indices 0..current (n = current+1)
+const ZONE_EV=[[W(4,'第二'),2],[S(6).start+.1,3],[S(7).start+.1,4],[S(8).start+.1,5],[S(9).start+.1,6]];
+// shot 10 replay: zone shrinks to 1 on 「左边」, grows back to 6 by 「插」 (same mice)
+const RP0=W(10,'左边'), RP1=W(10,'插'), RPstep=k=>RP0+k*(RP1-RP0)/5;   // k=0..5 → n=k+1
+const CHEER0=W(10,'排');
+function zoneN(t){let n=0,prev=0,k=1;for(const [et,v] of ZONE_EV){if(t>=et){prev=n;n=v;k=eio((t-et)/.6);}}
+ let z=lerp(prev,n,k);
+ if(t>=RP0-.4&&t<S(10).end+.5){ // replay
+  if(t<RP0)z=lerp(6,1,eio((t-RP0+.4)/.4));else{let m=1;for(let s=1;s<6;s++)if(t>=RPstep(s))m=s+1;const ls=RPstep(m-1);z=m===1?1:lerp(m-1,m,eio((t-ls)/.35));}}
+ return z;}
+// acting cues
+const LOOKS=[ // [t0,t1,mouse,dir]
+ [W(4,'往'),S(4).end-.2,2,-1],[W(4,'左')+.1,S(4).end-.2,5,1],
+ [S(5).start+.1,J5.t0,2,-1],[S(5).start+.2,J5.t0,5,1],
+ [S(6).start+.1,J6.t0,4,-1],[S(6).start+.15,J6.t0,5,1],[W(6,'看'),W(6,'停')+.8,4,-1],[W(6,'看')+.1,W(6,'停')+.8,2,1],
+ [W(7,'6')-.1,W(7,'不动'),6,-1],[W(7,'6'),W(7,'不动'),5,1],
+ [J8[0].t0-.45,J8[0].t0,1,-1],[J8[0].t0-.4,J8[0].t0,6,1],
+ [W(9,'3')-.2,J9[0].t0,3,-1],[W(9,'3')-.1,J9[0].t0,6,1],
+ [tStop-.15,S(9).end-.1,3,-1],[tStop-.05,S(9).end-.1,2,1]];
+const SHAKE4=[W(6,'大')-.1,1.05];       // 4 shakes head: 「比2大，停」
+const PUFF6=[W(7,'不动'),2.1];          // 6 puffs chest on 「不动」
+const CHECK6=W(7,'轻松');
+const STOP3=[tStop,.9];                 // 3 stops: small flinch-back at 「停在」
+const FLIP0=W(12,'插入');               // signs flip into 插入排序
+const CH={1:'★',2:'插',3:'入',4:'排',5:'序',6:'★'};
+
+/* shot 3: run-in + cards become signs */
+const RUN0=W(3,'六只')-.15, RUN_D=1.1, runStart=i=>RUN0+i*.12;
+const FLY0=W(3,'来'), FLY_D=.72, flyStart=v=>FLY0+(v-1)*.12, flyEnd=v=>flyStart(v)+FLY_D;
+
+/* shot 11 demo row */
+const D_LOOK0=W(11,'每'), D_END=W(11,'一下');
+const D_ONE=W(11,'一次'), DSTEP=(D_ONE-D_LOOK0)/5.6;
+const dLook=j=>D_LOOK0+.1+(j-1)*DSTEP;   // j=1..5
+const dGreen=i=>i===0?D_LOOK0:dLook(i)+.45;     // j=1..5: each looks left & nods, lagged
+function zone2N(t){if(t<S(11).start-.5)return 0;let n=1;
+ for(let j=1;j<=5;j++){const tn=dGreen(j);if(t>=tn)n=lerp(j,j+1,eio((t-tn)/.3));}
+ return n;}
+
+/* ---------------- camera ---------------- */
+const CAM=[ // [t0,dur,scale,cx,cy]
+ [W(4,'第二')-.3,1.3,1.3,slotX(.5),600],
+ [W(4,'数字')+.2,1.2,1,960,540],
+ [S(5).start+.05,.9,1.42,slotX(.5),610],
+ [S(6).start+.1,1.0,1.3,slotX(1),610],
+ [S(7).start+.1,1.0,1.38,slotX(2.5),610],
+ [S(8).start+.05,.8,1.3,slotX(3.6),610],
+ [J8[3].t0+J8[3].d,1.0,1,960,540],
+ [S(9).start+.05,.9,1.26,slotX(4.3),600],
+ [S(9).end-.9,1.3,1,960,540],
+ [S(11).start-.1,1.4,1,960+DEMO_OFF,540],
+ [S(12).start,1.3,1.04,960,560]];
+const FOLLOW=[[J8[0].t0-.1,J8[3].t0+J8[3].d+.3,1],[J9[0].t0-.1,J9[2].t0+J9[2].d+.3,3]];
+function camAt(t){let s=1,cx=960,cy=540;
+ for(const k of CAM){if(t<k[0])break;const e=eio((t-k[0])/k[1]);s=lerp(s,k[2],e);cx=lerp(cx,k[3],e);cy=lerp(cy,k[4],e);}
+ for(const f of FOLLOW){const w=win(t,f[0],f[1],.5);if(w>0){const fx=mainPose(f[2],t-.15).x;cx=lerp(cx,fx,w*.85);}}
+ return {s,cx,cy};}
+
+/* ---------------- main-row pose (pure f(t)) ---------------- */
+function mainPose(v,t){
+ const L=layout(t), idx=L.order.indexOf(v), seed=v*7+1;
+ let jumpD=null,duckD=null;
+ if(L.act){const e=L.act.e,ia=L.order.indexOf(e.v);
+  if(v===e.v)jumpD=R.jumpOver(L.act.u,{from:slotX(ia),to:slotX(ia-1),height:e.d<.7?62:72});
+  if(v===e.over)duckD=R.duck(L.act.u,{from:slotX(ia-1),to:slotX(ia)});}
+ let look=null;for(const l of LOOKS){if(l[2]===v&&t>=l[0]&&t<=l[1]){look=R.lookAt((t-l[0])/(l[1]-l[0]),l[3]);break;}}
+ const sh=v===4?R.local(t,SHAKE4[0],SHAKE4[1]):null;
+ const pf=v===6?R.local(t,PUFF6[0],PUFF6[1]):null;
+ const st=v===3?R.local(t,STOP3[0],STOP3[1]):null;
+ const ch=R.local(t,CHEER0+idx*.09,1.65);
+ const rp=replayHop(v,idx,t);
+ // run-in (shot 3): enter from the left with little hops
+ const ru=(t-runStart(VALS.indexOf(v)))/RUN_D;
+ let run=null;
+ if(ru<1){const k=c01(ru);run={x:-(1-eo(k))*1700,y:-Math.abs(Math.sin(k*Math.PI*5))*34*(1-k),lean:12*(1-k),squash:-.15*(1-k),eyes:'wide'};}
+ else if(ru<1.35){const a=(ru-1)/.35;run={squash:.5*Math.sin(Math.PI*a)*(1-a*.5),lean:-6*Math.sin(Math.PI*a)};}
+ const p=R.compose({x:slotX(idx)},R.idleBreath(t,seed),R.blinkAt(t,seed),look,
+  sh!=null?R.shakeHead(sh,3):null,pf!=null?R.puffChest(pf):null,st!=null?R.flinch(st,{dir:1}):null,
+  ch!=null?R.cheer(ch,3):null,rp,run,jumpD,duckD);
+ if(jumpD)p.x=jumpD.x+(run?run.x:0); else if(duckD)p.x=duckD.x;
+ p._z=duckD?3:jumpD?1:2;p._idx=idx;
+ return p;}
+function replayHop(v,idx,t){const s=RPstep(idx);if(idx===0)return null;const u=R.local(t,s-.1,.55);return u!=null?R.cheer(u,1):null;}
+
+/* sign content per mouse */
+function mainSign(v,t,idx,act,nZ){
+ let text='',state='idle',raise=1,flip=1;
+ if(t>=flyEnd(v))text=String(v);
+ const ru=(t-runStart(VALS.indexOf(v)))/RUN_D; raise=ru<1?.25:lerp(.25,1,eback((t-flyStart(v)-.1)/.5));
+ if(t>=W(4,'第二')-.6&&idx<Math.round(nZ))state='sorted';
+ if(act&&act[2]===v)state='active';
+ if(t>=CHEER0+idx*.09)state='sorted';
+ if(t>=RP0-.4&&t<S(10).end){state=idx<Math.floor(zoneN(t)+.5)?'sorted':'idle';}
+ const q=(t-FLIP0-idx*.14)/.45;
+ if(q>=0){flip=Math.cos(Math.PI*c01(q));if(q>=.5)text=CH[v];}
+ return {signText:text||' ',signState:state,signRaise:raise,signFlip:flip===0?.02:flip};}
+
+/* ---------------- demo row pose ---------------- */
+function demoPose(v,t){const i=v-1,seed=v*13+5;let look=null,nod=null;
+ if(i>=1){const t0=dLook(i);const u=R.local(t,t0,Math.min(.75,DSTEP*1.3));if(u!=null){look=R.lookAt(u,-1);
+   const nu=R.local(t,t0+.3,.3);if(nu!=null)nod={headTilt:-8*Math.sin(Math.PI*nu)*(-1),squash:.18*Math.sin(Math.PI*nu)};}}
+ const fin=R.local(t,D_END+i*.06,.55);
+ const p=R.compose({x:slotX2(i)},R.idleBreath(t,seed),R.blinkAt(t,seed),look,nod,fin!=null?R.cheer(fin,1):null);
+ const n=zone2N(t);
+ p.signText=String(v);p.signState=t>=dGreen(i)?'sorted':'idle';
+ p._z=2;return p;}
+
+function applyMouse(m,p){R.pose(m.el,p);m.el.style.zIndex=p._z||2;
+ const s=R.shadow(p);m.sh.style.left=s.x+'px';m.sh.style.transform='scale('+s.scaleX.toFixed(3)+','+s.scaleY.toFixed(3)+')';m.sh.style.opacity=s.opacity;}
+
+/* ---------------- outlines ---------------- */
+const hlEls=[0,1].map(k=>{const d=document.createElement('div');d.className='hl '+(k?'cmp':'ins');$('hls').appendChild(d);return d;});
+function renderOutline(t,P){let cur=null,w=0;for(const o of OUTL){const ww=win(t,o[2],o[3],.2);if(ww>w){w=ww;cur=o;}}
+ hlEls.forEach((el,k)=>{if(!cur||w<.01){el.hidden=true;return;}el.hidden=false;const v=cur[k],p=P[v];
+  const pop=eback((t-cur[2])/.35);el.style.left=(p.x+19)+'px';el.style.opacity=w;
+  el.style.transform='scale('+(.85+.15*pop).toFixed(3)+')';});}
+
+/* ---------------- cards (shots 1-3) ---------------- */
+const SUIT={5:'♥',2:'♠',4:'♦',6:'♣',1:'♥',3:'♠'};
+const cardEls={};VALS.forEach(v=>{const d=document.createElement('div');d.className='card';d.innerHTML='<i>'+SUIT[v]+'</i><span>'+v+'</span>';
+ if(SUIT[v]==='♥'||SUIT[v]==='♦')d.querySelector('i').style.color='#d9483a';$('cards').appendChild(d);cardEls[v]=d;});
+const CARD_D=.55,CARD_LF=.75;
+const CE=[[2,W(2,'张')],[4,W(2,'起来')],[1,W(2,'插到')],[3,W(2,'位置')]].map(([v,l])=>({v,t0:l-CARD_LF*CARD_D,d:CARD_D}));
+const CORD=[[2,5,4,6,1,3],[2,4,5,6,1,3],[1,2,4,5,6,3],[1,2,3,4,5,6]];
+const cardX=i=>slotX(i);
+function cardOrder(t){let o=VALS.slice(),act=null;
+ CE.forEach((e,k)=>{if(act)return;if(t>=e.t0+e.d)o=CORD[k];else if(t>=e.t0)act={e,u:(t-e.t0)/e.d,from:o,to:CORD[k]};});
+ return {o,act};}
+const CONGRATS=W(2,'恭喜');
+function renderCards(t,P){
+ const show=t<flyEnd(6)+.05;$('cards').hidden=!show;if(!show)return;
+ const C=cardOrder(t);
+ const push=1+.08*eio((t-.4)/1.8);
+ const lift=eio((t-S(3).start-.05)/.9);       // shot 3: cards rise to make room for the title
+ VALS.forEach(v=>{const el=cardEls[v];let slot=C.o.indexOf(v),x=cardX(slot),y=0,rot=0,sy=1,op=1;
+  if(C.act){const a=C.act.from.indexOf(v),b=C.act.to.indexOf(v),u=C.act.u;
+   if(v===C.act.e.v){if(u<.2){x=cardX(a);sy=1-.08*eo(u/.2);}
+    else if(u<.75){const q=(u-.2)/.55;x=lerp(cardX(a),cardX(b),eio(q));y=-200*Math.sin(Math.PI*q);rot=-14*Math.sin(Math.PI*q);}
+    else{const q=(u-.75)/.25;x=cardX(b);sy=1-.12*Math.sin(Math.PI*q);}}
+   else{const q=c01((u-.2)/.55);x=lerp(cardX(a),cardX(b),eio(q));}}
+  const d0=.35+VALS.indexOf(v)*.14,dk=(t-d0)/.6;y+=(1-eback(dk))*650;op=c01(dk*3);
+  const messy=1-eio((t-S(2).start-.1)/.9);rot+=messy*((slot-2.5)*7+(slot%2?5:-4));y+=messy*(slot%2?26:-20);
+  const bk=(t-CONGRATS-slot*.07)/.5;if(bk>0&&bk<1){y-=70*Math.sin(Math.PI*bk);sy*=bk<.15?.9:1.04;}
+  // screen position (push about centre), then lift
+  let sx=960+(x-960)*push, syy=540+(y)*push, w=150*push*(1-.18*lift), h=210*push*(1-.18*lift), fs=96*(1-.18*lift), rad=20, suitOp=1;
+  syy=lerp(syy,330,lift);
+  // fly onto the mouse sign (match-cut): same object becomes the sign
+  const fu=(t-flyStart(v))/FLY_D;
+  if(fu>0){const k=eio(fu),pm=P[v],cam=camAt(t),tx=960+(pm.x+38-cam.cx)*cam.s,ty=540+(FLOOR-302-cam.cy)*cam.s;
+   sx=lerp(sx,tx,k);syy=lerp(syy,ty,k)-160*Math.sin(Math.PI*c01(fu));w=lerp(w,128*cam.s,k);h=lerp(h,108*cam.s,k);fs=lerp(fs,74*cam.s,k);rad=lerp(20,18,k);suitOp=1-c01(fu*2.5);
+   rot=lerp(rot,0,k)+18*Math.sin(Math.PI*c01(fu));}
+  el.style.width=w+'px';el.style.height=h+'px';el.style.fontSize=fs+'px';el.style.borderRadius=rad+'px';el.querySelector('i').style.opacity=suitOp;
+  el.style.transform='translate('+(sx-w/2).toFixed(1)+'px,'+(syy-h/2).toFixed(1)+'px) rotate('+rot.toFixed(2)+'deg) scale(1,'+sy.toFixed(3)+')';
+  el.style.opacity=fu>=1?0:op;});
+}
+
+/* ---------------- HUD labels (beat-timed) ---------------- */
+function fadeEl(el,t,a,b,r){const w=win(t,a,b,r||.3);el.style.opacity=w;el.hidden=w<=0.001;return w;}
+const on=(t,tw)=>t>=tw-.08;
+const LABELS=[
+ [S(5).start+.2,S(5).end-.05,t=>'<b>2</b> &lt; <em>5</em>'+(on(t,W(5,'换'))?' → 换！':'')],
+ [S(6).start+.15,W(6,'看')-.1,t=>'<b>4</b> &lt; <em>5</em>'+(on(t,W(6,'换'))?' → 换':'')],
+ [W(6,'看')-.1,S(6).end-.05,t=>'<b>4</b> &gt; <em>2</em>'+(on(t,W(6,'停'))?' → 停':'')],
+ [S(7).start+.15,S(7).end-.05,t=>'<b>6</b> &gt; <em>5</em>'+(on(t,W(7,'不动'))?' → 不动':'')],
+ [S(8).start+.15,S(8).end-.05,t=>{let n=0;for(const e of J8)if(t>=land(e))n++;return '<b>1</b> 连换 <b>'+n+'</b> 次';}],
+ [S(9).start+.15,S(9).end-.05,t=>{const g=['6','5','4'].map((w,k)=>on(t,n9[k])?'跳过 <em>'+w+'</em>':'<s>跳过 '+w+'</s>');
+   return '<b>3</b>：'+g.join(' · ')+(on(t,tStop)?' → 停':'');}],
+ [RP0-.1,S(10).end-.05,()=>'左边这队，<g>一直是排好的</g>'],
+ [W(11,'一次')-.1,S(11).end-.05,t=>'本来就排好：交换 <em>0</em> 次'+(on(t,D_END)?' → 结束':'')]];
+
+function render(t){
+ t=clamp(t,0,TOTAL);
+ $('bar').style.width=(t/TOTAL*1920)+'px';
+ let line='',sw=0;for(const s of TIMELINE.shots){if(t>=s.vo_start&&t<=s.vo_end){line=s.line;sw=Math.min(c01((t-s.vo_start)/.12),c01((s.vo_end-t)/.12));}}
+ const sub=$('sub');sub.textContent=line;sub.hidden=!line;sub.style.opacity=sw;sub.style.transform='translateX(-50%)';
+ const cam=camAt(t);
+ blobEls.forEach((el,i)=>{const b=BLOBS[i];el.style.transform='translate('+(Math.sin(t/b[4]*2)*24)+'px,'+(Math.cos(t/b[4]*1.6)*18)+'px) scale('+(1+.06*Math.sin(t*6.28/b[4]))+')';el.style.opacity=.75+.25*Math.sin(t*6.28/b[4]+i);});
+ $('bg').style.transform='translate('+(-(cam.cx-960)*.08)+'px,'+(-(cam.cy-540)*.25)+'px) scale('+(1+(cam.s-1)*.25)+')';
+ $('world').style.transform='translate(960px,540px) scale('+cam.s+') translate('+(-cam.cx)+'px,'+(-cam.cy)+'px)';
+ const act=activeAt(t),nZ=zoneN(t);
+ const P={};
+ VALS.forEach(v=>{const p=mainPose(v,t);Object.assign(p,mainSign(v,t,p._idx,act,nZ));P[v]=p;applyMouse(mice[v],p);});
+ [1,2,3,4,5,6].forEach(v=>applyMouse(demo[v],demoPose(v,t)));
+ renderCards(t,P);
+ renderOutline(t,P);
+ // sorted zones
+ const z=$('zone'),zv=nZ>.02&&t<S(11).start+.8;z.hidden=!zv;z.style.left=(slotX(0)-100)+'px';z.style.width=Math.max(0,nZ*DX+10)+'px';
+ z.style.opacity=c01(nZ*2)*(1-c01((t-S(11).start)/.6));
+ const zl=$('zlab');zl.hidden=z.hidden;zl.style.opacity=z.style.opacity;
+ zl.style.transform='translate('+(960+(slotX(0)-82-cam.cx)*cam.s)+'px,'+(540+(852-cam.cy)*cam.s)+'px)';
+ const n2=zone2N(t),z2=$('zone2');z2.hidden=n2<.02||t>S(12).start+1;z2.style.left=(slotX2(0)-100)+'px';z2.style.width=Math.max(0,n2*DX+10)+'px';z2.style.opacity=1;
+ const zl2=$('zlab2');zl2.hidden=z2.hidden;zl2.style.opacity=z2.style.opacity;
+ zl2.style.transform='translate('+(960+(slotX2(0)-82-cam.cx)*cam.s)+'px,'+(540+(852-cam.cy)*cam.s)+'px)';
+ // arrow over the orange mouse
+ const ar=$('arrow');if(act){const w=win(t,act[0],act[1],.25),Q=P[act[2]];ar.hidden=false;ar.style.opacity=w;
+  ar.style.transform='translate('+(Q.x+19)+'px,'+(FLOOR-356+Math.sin(t*6)*4)+'px) scale('+(.6+.4*eo(w))+')';}else ar.hidden=true;
+ const ck=$('check');ck.hidden=t<CHECK6||t>S(7).end;ck.style.left=(P[6].x+120)+'px';ck.style.top=(FLOOR-330)+'px';
+ ck.style.opacity=1-c01((t-S(7).end+.35)/.35);ck.style.transform='scale('+eback((t-CHECK6)/.4)+') rotate('+(-12*(1-eo((t-CHECK6)/.5)))+'deg)';
+ // title (shot 3), rules + legend (shot 4), end card (shot 12)
+ const tw=fadeEl($('title'),t,W(3,'插入')-.25,W(3,'今天')+.4,.4);$('title').style.transform='translateY('+(1-eo(tw))*40+'px)';
+ $('title').querySelector('u').style.transform='scaleX('+eo((t-W(3,'排序'))/.6)+')';
+ fadeEl($('rules'),t,S(4).start+.2,S(4).end-.05,.3);
+ const chipT=[W(4,'从'),W(4,'数字'),W(4,'换',1)];
+ [...$('rules').children].forEach((c,i)=>{const k=(t-chipT[i]+.1)/.45;c.style.opacity=c01(k*2);c.style.transform='translateY('+(1-eback(k))*-40+'px) scale('+(.85+.15*eback(k))+')';});
+ fadeEl($('legend'),t,W(4,'数字')+.6,S(4).end-.1,.4);
+ const ew=fadeEl($('endcard'),t,W(12,'下'),TOTAL+1,.5);$('endcard').style.transform='translateX(-50%) translateY('+(1-eo(ew))*-50+'px)';
+ const cmp=$('cmp');let cw=0,html='';for(const L of LABELS){const w=win(t,L[0],L[1],.25);if(w>cw){cw=w;html=L[2](t);}}
+ cmp.innerHTML=html;cmp.hidden=cw<=.001;cmp.style.opacity=cw;cmp.style.transform='translateY('+(1-eo(cw))*24+'px)';
+ const aw=win(t,S(5).start+.2,S(10).end-.05,.3),arr=$('arr');arr.hidden=aw<=.001;arr.style.opacity=aw;
+ if(aw>0){const o=layout(t).order;arr.innerHTML='[ '+o.map(v=>act&&act[2]===v?'<b>'+v+'</b>':v).join(', ')+' ]';}
+}
+window.__state=t=>{t=clamp(Number(t)||0,0,TOTAL);
+ if(t>=S(11).start&&t<S(11).end)return {order:[1,2,3,4,5,6],row:'sorted-demo',swaps:0};
+ return {order:layout(t).order.slice()};};
+let stopped=false,t0=null;
+function loop(now){if(stopped)return;if(t0===null)t0=now;const t=(now-t0)/1000;render(t);if(t<TOTAL)requestAnimationFrame(loop);}
+window.seek=function(t){stopped=true;render(Number(t)||0);};
+render(0);requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

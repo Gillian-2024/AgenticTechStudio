@@ -1,0 +1,8 @@
+# Per-shot voice clips are rebuilt by scripts/build_timeline.py; keep only the merged voiceover.m4a
+samples/*/*/vo/
+
+# Render outputs and local tooling
+node_modules/
+frames*/
+out/
+.DS_Store

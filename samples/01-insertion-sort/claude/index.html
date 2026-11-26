@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>插入排序：小老鼠排队</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#1d1a2b;overflow:hidden;font-family:"PingFang SC","Hiragino Sans GB",sans-serif}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;
+ background:radial-gradient(ellipse at 50% 30%,#fff8e7 0%,#ffe9c2 60%,#f7d49a 100%)}
+.floor{position:absolute;left:0;right:0;top:760px;height:320px;background:linear-gradient(#e9b97a,#d49a5c)}
+.floor:before{content:"";position:absolute;left:0;right:0;top:0;height:10px;background:#c88a4c}
+.layer{position:absolute;inset:0}
+#title{position:absolute;left:0;right:0;top:120px;text-align:center;font-size:150px;font-weight:900;color:#3b2a5e;letter-spacing:12px;text-shadow:6px 6px 0 #ffb547}
+#titleSub{position:absolute;left:0;right:0;top:310px;text-align:center;font-size:48px;color:#7a5c3a}
+.card{position:absolute;top:460px;width:170px;height:240px;margin-left:-85px;border-radius:18px;background:#fff;border:4px solid #3b2a5e;box-shadow:0 10px 0 rgba(59,42,94,.25);font-size:96px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.card .s{position:absolute;left:14px;top:8px;font-size:36px}
+.mouse{position:absolute;top:470px;width:220px;height:300px;margin-left:-110px}
+.sign{position:absolute;left:50%;top:-10px;width:120px;height:100px;margin-left:-60px;border-radius:16px;background:#fff;border:5px solid #3b2a5e;font-size:72px;font-weight:900;color:#3b2a5e;display:flex;align-items:center;justify-content:center;transition:none}
+.stick{position:absolute;left:50%;top:86px;width:8px;height:60px;margin-left:-4px;background:#8a5a2b}
+.mouse svg{position:absolute;left:0;top:120px}
+#rule{position:absolute;left:160px;right:160px;top:90px;padding:30px 40px;border-radius:30px;background:#fff;border:6px dashed #ff8a3d;font-size:54px;line-height:1.5;color:#3b2a5e;text-align:center}
+#rule b{color:#e5532d}
+#arrow{position:absolute;top:340px;font-size:100px;line-height:1;color:#e5532d;margin-left:-40px}
+#cmp{position:absolute;left:0;right:0;top:100px;text-align:center;font-size:96px;font-weight:900;color:#3b2a5e}
+#arr{position:absolute;left:0;right:0;top:225px;line-height:1.2;text-align:center;font-size:52px;color:#7a5c3a;letter-spacing:6px}
+#zone{position:absolute;top:445px;height:330px;border-radius:30px;background:rgba(76,187,120,.22);border:5px solid #4cbb78}
+#zone span{position:absolute;left:20px;top:-62px;font-size:40px;color:#2f8a55;font-weight:700;white-space:nowrap}
+#check{position:absolute;top:360px;font-size:110px;color:#2f8a55;margin-left:-40px;font-weight:900}
+#end{position:absolute;inset:0;background:#3b2a5e;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+#end h1{font-size:150px;letter-spacing:14px;color:#ffd166}
+#end p{font-size:60px;margin-top:40px}
+#sub{position:absolute;left:50%;bottom:60px;transform:translateX(-50%);max-width:1700px;padding:18px 44px;border-radius:20px;background:rgba(29,26,43,.82);color:#fff;font-size:50px;line-height:1.4;text-align:center}
+#bar{position:absolute;left:0;bottom:0;height:8px;background:#ff8a3d}
+</style>
+</head>
+<body>
+<div id="stage">
+ <div class="floor"></div>
+ <div class="layer" id="L1"><div id="title">插入排序</div><div id="titleSub">像理扑克牌一样排序</div><div id="cards"></div></div>
+ <div class="layer" id="L2">
+  <div id="rule">从<b>第二只</b>开始，每只往左看：<br>比左边小，就<b>交换</b>；换不动，就<b>停</b>。</div>
+  <div id="cmp"></div><div id="arr"></div>
+  <div id="zone"><span>已排好</span></div>
+  <div id="arrow">▼</div><div id="check">✔</div>
+  <div id="mice"></div>
+ </div>
+ <div id="end"><h1>插入排序</h1><p>下次理牌的时候，你就是一台电脑。</p></div>
+ <div id="sub"></div>
+ <div id="bar"></div>
+</div>
+<script>
+(function(){
+const stage=document.getElementById('stage');
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform='scale('+s+')';stage.style.left=(innerWidth-1920*s)/2+'px';stage.style.top=(innerHeight-1080*s)/2+'px';}
+addEventListener('resize',fit);fit();
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+
+// ---- subtitles ----
+const SUBS=[[0,6,'你打扑克的时候，是怎么理牌的？'],[6,12,'一张一张拿起来，插到它该在的位置。电脑里有个算法，就是这么干的。'],
+[12,18,'今天，六只小老鼠举着数字牌，要从矮到高排好队。'],[18,26,'规则只有一条：从第二只开始往左看，比左边小，就和左边换位置，直到换不动为止。'],
+[26,32,'2 比 5 小，换！2 到了最前面。'],[32,38,'4 比 5 小，换；4 比 2 大，停。'],[38,42,'6 比 5 大，不用动。'],
+[42,50,'1 最小，一路换了四次，换到最前面；3 换三次，插到 2 和 4 中间。'],
+[50,56,'排好了！左边永远是排好的队伍，新来的小老鼠只要找到位置插进去。'],[56,60,'这就是插入排序。下次理牌的时候，你就是一台电脑。']];
+
+// ---- cards (shots 1-2) ----
+const CV=['7','3','9','2','5'],CS=['♥','♠','♦','♣','♥'];
+const cardsEl=$('cards');const cardEls=CV.map((v,i)=>{const d=document.createElement('div');d.className='card';
+ d.innerHTML='<span class="s">'+CS[i]+'</span>'+v;d.style.color=(CS[i]=='♥'||CS[i]=='♦')?'#e5532d':'#3b2a5e';cardsEl.appendChild(d);return d;});
+// orders of card indices over time (insertion steps)
+const CARD_EV=[[7.0,[1,0,2,3,4]],[8.3,[1,0,2,3,4]],[9.2,[3,1,0,2,4]],[10.6,[3,1,4,0,2]]];
+function orderAt(init,evs,t,dur){let prev=init,cur=init,p=1;
+ for(const [et,o] of evs){ if(t>=et+dur){prev=cur=o;} else if(t>=et){prev=cur;cur=o;p=(t-et)/dur;return [prev,cur,ease(p)];} else break;}
+ return [prev,cur,1];}
+function slotPos(order,id){return order.indexOf(id);}
+
+// ---- mice ----
+const COLORS=['#b9b3c9','#c9a98a','#a9b8c9','#d0b0c0','#b8c4a0','#c8b890'];
+function mouseSVG(c){return '<svg width="220" height="180" viewBox="0 0 220 180">'+
+ '<path d="M170 140 q40 -10 40 -50 q0 -20 -15 -25" stroke="#d98aa0" stroke-width="7" fill="none" stroke-linecap="round"/>'+
+ '<ellipse cx="110" cy="125" rx="72" ry="52" fill="'+c+'" stroke="#3b2a5e" stroke-width="5"/>'+
+ '<circle cx="58" cy="40" r="30" fill="'+c+'" stroke="#3b2a5e" stroke-width="5"/><circle cx="58" cy="40" r="16" fill="#f5b3c3"/>'+
+ '<circle cx="162" cy="40" r="30" fill="'+c+'" stroke="#3b2a5e" stroke-width="5"/><circle cx="162" cy="40" r="16" fill="#f5b3c3"/>'+
+ '<ellipse cx="110" cy="80" rx="55" ry="46" fill="'+c+'" stroke="#3b2a5e" stroke-width="5"/>'+
+ '<circle cx="90" cy="74" r="8" fill="#3b2a5e"/><circle cx="130" cy="74" r="8" fill="#3b2a5e"/>'+
+ '<circle cx="93" cy="71" r="3" fill="#fff"/><circle cx="133" cy="71" r="3" fill="#fff"/>'+
+ '<circle cx="110" cy="94" r="8" fill="#e5708f"/>'+
+ '<path d="M84 98 l-30 -4 M84 104 l-30 6 M136 98 l30 -4 M136 104 l30 6" stroke="#3b2a5e" stroke-width="3"/>'+
+ '<ellipse cx="80" cy="172" rx="18" ry="8" fill="#e5a0b5"/><ellipse cx="140" cy="172" rx="18" ry="8" fill="#e5a0b5"/></svg>';}
+const VALS=[5,2,4,6,1,3];
+const miceEl=$('mice');
+const mice=VALS.map((v,i)=>{const d=document.createElement('div');d.className='mouse';
+ d.innerHTML='<div class="sign">'+v+'</div><div class="stick"></div>'+mouseSVG(COLORS[i]);miceEl.appendChild(d);return {el:d,sign:d.querySelector('.sign'),v};});
+const X0=460,DX=200; const sx=i=>X0+i*DX;
+// order = array of values; swaps with 0.7s transition
+const D=0.7;
+const MEV=[[28,[2,5,4,6,1,3]],[33.5,[2,4,5,6,1,3]],
+ [42.6,[2,4,5,1,6,3]],[43.5,[2,4,1,5,6,3]],[44.4,[2,1,4,5,6,3]],[45.3,[1,2,4,5,6,3]],
+ [46.8,[1,2,4,5,3,6]],[47.8,[1,2,4,3,5,6]],[48.8,[1,2,3,4,5,6]]];
+// active value, compare text, sorted count
+const PHASE=[[18,26,2,'',1,'从第二只开始'],[26,28,2,'2 < 5 → 换！',1],[28.7,32,2,'2 到了最前面',2],
+ [32,33.5,4,'4 < 5 → 换',2],[34.2,35.5,4,'4 < 5 → 换',2],[35.5,38,4,'4 > 2 → 停',3],
+ [38,42,6,'6 > 5 → 不用动 ✔',4],[42,46,1,'1 一路换了 4 次',4],[46,46.8,1,'1 到最前面',5],[46.8,50,3,'3 换 3 次',5],
+ [49.5,56,0,'',6]];
+function phaseAt(t){let r=null;for(const p of PHASE){if(t>=p[0]&&t<p[1])r=p;}
+ if(!r){for(const p of PHASE)if(t>=p[0])r=p;}return r;}
+
+function render(t){
+ t=clamp(t,0,60);
+ $('bar').style.width=(t/60*1920)+'px';
+ const s=SUBS.find(x=>t>=x[0]&&t<x[1])||SUBS[SUBS.length-1];$('sub').textContent=s[2];
+ // layers
+ const L1=$('L1'),L2=$('L2'),E=$('end');
+ L1.style.opacity=t<11.5?1:clamp(1-(t-11.5)/0.5,0,1);L1.hidden=t>=12;
+ L2.hidden=t<11.5;L2.style.opacity=clamp((t-11.5)/0.5,0,1);
+ E.hidden=t<56;E.style.opacity=clamp((t-56)/0.6,0,1);
+ // title
+ $('title').style.transform='translateY('+(t<1?(1-ease(t))*-200:0)+'px)';
+ $('title').style.opacity=t<6?clamp(t/0.8,0,1):clamp(1-(t-6)/0.6,0.25,1);
+ // cards
+ const [cp,cc,ce]=orderAt([0,1,2,3,4],CARD_EV,t,0.9);
+ cardEls.forEach((el,id)=>{const a=slotPos(cp,id),b=slotPos(cc,id);const x=760+(a+(b-a)*ce)*170+(t<6?0:0);
+  const moving=a!==b&&ce<1;const fan=t<6?((id%2)?-1:1)*(8+id*3):0;
+  const y=moving?-Math.sin(ce*Math.PI)*160:0;
+  el.style.left=(x-170)+'px';el.style.transform='translateY('+y+'px) rotate('+(fan*(t<6?1:clamp(1-(t-6),0,1)))+'deg)';
+  el.style.opacity=clamp((t-0.5-id*0.25)/0.4,0,1);});
+ if(t<12)return;
+ // mice
+ const [mp,mc,me]=orderAt(VALS,MEV,t,D);
+ const ph=t>=18?phaseAt(t):null;
+ const sorted=ph?ph[4]:0;
+ const active=ph?ph[2]:0;
+ const allDone=t>=49.5;
+ mice.forEach((m,i)=>{const a=mp.indexOf(m.v),b=mc.indexOf(m.v);const pos=a+(b-a)*me;
+  let y=0;if(a!==b&&me<1){y=(b<a?-1:0.0)*Math.sin(me*Math.PI)*140;}
+  const enter=clamp((t-12.3-i*0.35)/0.5,0,1);
+  const bob=Math.sin(t*4+i)*4;
+  m.el.style.left=(sx(pos)+(1-ease(enter))*-1400)+'px';
+  m.el.style.transform='translateY('+(y+bob)+'px)';
+  let bg='#fff',bc='#3b2a5e',sc=1;
+  if(allDone||(t>=18&&b<sorted&&m.v!==active)){bg='#c9f2d6';bc='#2f8a55';}
+  if(m.v===active&&!allDone){bg='#ffd166';bc='#e5532d';sc=1.15;}
+  if(t>=50){bg='#7ee0a0';bc='#2f8a55';sc=1+0.08*Math.max(0,Math.sin((t-50)*6-i))*(t<52?1:0);}
+  m.sign.style.background=bg;m.sign.style.borderColor=bc;m.sign.style.transform='scale('+sc+')';});
+ // rule box / compare text
+ $('rule').hidden=!(t>=18&&t<26);
+ $('cmp').hidden=$('arr').hidden=!(t>=26&&t<50);
+ if(t>=26&&t<50){$('cmp').textContent=ph[3];$('arr').textContent='[ '+(me>=1?mc:mp).join(' , ')+' ]';}
+ // arrow over active
+ const ar=$('arrow');ar.hidden=!(t>=18.5&&t<49.5);
+ if(!ar.hidden){const a=mp.indexOf(active),b=mc.indexOf(active);ar.style.left=sx(a+(b-a)*me)+'px';ar.style.transform='translateY('+(Math.sin(t*6)*12)+'px)';}
+ const ck=$('check');ck.hidden=!(t>=39&&t<42);ck.style.left=sx(3)+'px';ck.style.top='250px';ck.style.transform='scale('+clamp((t-39)/0.3,0,1)+')';
+ // sorted zone
+ const z=$('zone');const zn=t>=50?6:(t>=18?sorted:0);z.hidden=zn===0||t<18;
+ const zt=t>=50?clamp((t-50)/0.5,0,1):1;
+ z.style.left=(sx(0)-110-15)+'px';z.style.width=(zn*DX+30-(zn?20:0))+'px';z.style.opacity=t>=50?zt:0.9;
+ z.querySelector('span').textContent=t>=50?'左边永远是排好的队伍':'已排好';
+}
+// ---- playback ----
+let start=null,paused=false,offset=0;
+function loop(now){if(paused)return;if(start===null)start=now;const t=offset+(now-start)/1000;render(t);if(t<60)requestAnimationFrame(loop);}
+window.seek=function(t){paused=true;render(Number(t)||0);};
+window.play=function(from){paused=false;offset=from||0;start=null;requestAnimationFrame(loop);};
+render(0);requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

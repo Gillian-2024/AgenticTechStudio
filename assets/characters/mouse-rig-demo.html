@@ -1,0 +1,58 @@
+<meta charset="utf-8">
+<title>MouseRig 动作样张</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#2a2238;overflow:hidden;font-family:"PingFang SC","Hiragino Sans GB",sans-serif}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;background:#f8ecd6;overflow:hidden}
+h1{position:absolute;left:60px;top:28px;font-size:44px;color:#3b2a5e}
+.cell{position:absolute;width:440px;height:470px;border-radius:24px;background:#fffaf0;border:4px solid #e3cfae;overflow:hidden}
+.cell .floor{position:absolute;left:0;right:0;top:400px;bottom:0;background:#ecc58f;border-top:6px solid #d9a86c}
+.cell .lab{position:absolute;left:20px;top:14px;font-size:28px;font-weight:700;color:#3b2a5e}
+.cell .dur{position:absolute;left:20px;top:54px;font-size:20px;color:#8a6a48}
+.mount{position:absolute;left:0;top:400px;width:0;height:0}
+.shadow{position:absolute;top:-10px;width:110px;height:18px;margin-left:-55px;border-radius:50%;background:rgba(122,84,46,.28)}
+</style>
+<div id="stage"><h1>MouseRig 动作词表（每格循环）</h1></div>
+<script src="../characters/mouse-rig.js"></script>
+<script>
+(function(){
+const R=MouseRig,E=R.ease,stage=document.getElementById('stage');
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform='scale('+s+')';}
+addEventListener('resize',fit);fit();
+const SC=.8,STEP=190*SC;
+// each cell: label, loop length (s), action window [t0,d], fn(u,t) -> delta, base
+const CELLS=[
+ ['jumpOver 跳过邻居',2.2,[.4,1.05],u=>R.jumpOver(u,{from:STEP/2,to:-STEP/2,height:70*SC}),{x:STEP/2,signText:'2',signState:'active'},
+  {x:-STEP/2,signText:'5'},u=>R.duck(u,{from:-STEP/2,to:STEP/2})],
+ ['flinch 受惊',1.6,[.5,.55],u=>R.flinch(u),{signText:'!'}],
+ ['shakeHead 摇头',2.0,[.4,1.1],u=>R.shakeHead(u,3),{signText:'×'}],
+ ['puffChest 挺胸',3.0,[.3,2.2],u=>R.puffChest(u),{signText:'6',signState:'sorted'}],
+ ['cheer 欢呼 ×2',2.0,[.3,1.1],u=>R.cheer(u,2),{signText:'★',signState:'sorted'}],
+ ['lookAt 左右看',2.6,[.2,2.2],u=>R.compose({},R.lookAt(E.c01(u*2),-1),R.lookAt(E.c01(u*2-1),1)),{signText:'4'}],
+ ['idleBreath + blinkAt',4.0,null,null,{signText:'1'}],
+ ['signState / signFlip',3.0,[.2,2.6],u=>({signState:u<.33?'idle':u<.66?'active':'sorted',signFlip:Math.cos(Math.PI*E.c01((u-.8)/.15))}),{signText:'3'}],
+];
+const views=CELLS.map((c,i)=>{const col=i%4,row=Math.floor(i/4);
+ const d=document.createElement('div');d.className='cell';d.style.left=(60+col*455)+'px';d.style.top=(110+row*485)+'px';
+ d.innerHTML='<div class="floor"></div><div class="lab">'+c[0]+'</div><div class="dur">loop '+c[1]+'s'+(c[2]?' · 动作 '+c[2][1]+'s':'')+'</div><div class="mount" style="left:220px"></div>';
+ stage.appendChild(d);const mount=d.querySelector('.mount');
+ const mk=(id)=>{const sh=document.createElement('div');sh.className='shadow';mount.appendChild(sh);
+  const w=document.createElement('div');w.innerHTML=R.svg(id,{body:['#c7bfd6','#d6b896','#b4c3d6','#dcbccb','#c3cfa9','#d6c79c'][(i+id.length)%6],scale:SC});
+  const el=w.firstChild;mount.appendChild(el);return {el,sh};};
+ const a=mk('m'+i),b=c[5]?mk('n'+i+'x'):null;return {a,b};});
+function place(v,p){R.pose(v.el,p);const s=R.shadow(p);v.sh.style.left=s.x+'px';v.sh.style.transform='scale('+s.scaleX+','+s.scaleY+')';v.sh.style.opacity=s.opacity;}
+function render(t){CELLS.forEach((c,i)=>{const lt=((t%c[1])+c[1])%c[1],w=c[2];
+ const u=w?R.local(lt,w[0],w[1]):null;
+ const p=R.compose(c[4],u!=null?c[3](u):null,R.idleBreath(t,i),R.blinkAt(t,i));
+ if(u!=null&&c[0].startsWith('jumpOver'))p.x=c[3](u).x; // jump owns x (absolute)
+ if(u==null&&c[0].startsWith('jumpOver')&&lt>=w[0]+w[1])p.x=-STEP/2;
+ place(views[i].a,p);
+ if(views[i].b){const q=R.compose(c[5],u!=null?c[6](u):null,R.idleBreath(t,i+20),R.blinkAt(t,i+20));
+  if(u!=null)q.x=c[6](u).x;else if(lt>=w[0]+w[1])q.x=STEP/2;
+  views[i].b.el.style.zIndex=2;place(views[i].b,q);views[i].a.el.style.zIndex=1;}});}
+let stopped=false,t0=null;
+function loop(now){if(stopped)return;if(t0===null)t0=now;render((now-t0)/1000);requestAnimationFrame(loop);}
+window.seek=t=>{stopped=true;render(Number(t)||0);};
+render(0);requestAnimationFrame(loop);
+})();
+</script>

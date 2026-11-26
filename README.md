@@ -25,16 +25,31 @@
 | 2026-11-24 | 核对 MGA 数据集：可作选题和剧本素材，不能直接当成稿（[调研](research/mga-dataset.md)） |
 | 2026-11-24 | 调研视频生成路线：选「代码渲染为主、原生视频点缀」（[调研](research/video-generation-paths.md)） |
 | 2026-11-24 | 在 24 万行中筛出 1,021 条 AI/CS 故事体样本，选定「插入排序」做首条样片（[筛选](research/mga-story-samples.md)） |
+| 2026-11-26 | 样片 01「插入排序」迭代三版定稿：v1 对比 Claude / GPT-6，v2 配音先行，v3 按技能包重做（[样片](samples/01-insertion-sort/README.md)） |
+| 2026-11-26 | 沉淀技能包：讲解方法、配音节拍、角色骨架三个 skill，加动画质量规范与验收脚本 |
 
 正在进行：
 
-- [ ] 跑通第一条样片「插入排序」：Claude 与 GPT-6.2 写 Manim / HTML 动画的效果对比
+- [ ] 打磨短视频节奏（开头钩子、剪辑密度）
 - [ ] 技术练习：自己在服务器上搭一条加密隧道，弄懂路由与加密原理
 - [ ] 速通补齐必要的技术基础
 
+## 流水线
+
+| 环节 | 做什么 | 产物 | 工具 |
+|---|---|---|---|
+| 素材 | 从 MGA 筛出 AI/CS 故事 | 候选故事 | `scripts/filter_mga_stories.py` |
+| 剧本 | 重写故事、核对事实（用程序把算法跑一遍） | `script-vN.md` 分镜表 | `concept-explainer` skill |
+| 配音 | 配音先行，按实际时长排时间线，带逐字时间戳 | `timeline.json`、`voiceover.m4a` | `scripts/build_timeline.py`、`voice-beat-sync` skill |
+| 动画 | 代码渲染 HTML 动画，动作踩在词上 | `index.html`（确定性 `seek(t)`） | `character-rig` skill、[动画质量规范](research/motion-quality-spec.md) |
+| 验收 | 由动画以外的角色检查：状态、字幕、节拍、截图 | `qa-report.json` | `scripts/qa_check.js`、`scripts/keyframes.js` |
+| 导出 | 逐帧截图 + ffmpeg 合成 | MP4 | `scripts/render_frames.js` |
+
+验收只修一轮，不做无限打磨。每轮踩到的坑都写回规范的验收清单。
+
 ## 想自己做一遍，可以怎么做
 
-流程跑通后，这里会写成可复现的步骤（使用的模型、提示词、工具链、踩过的坑）。目前可以先从这些资料开始：
+样片的完整渲染和验收步骤见 [样片 01](samples/01-insertion-sort/README.md)。素材从这些资料开始：
 
 - 论文：[Reformulation for Pretraining Data Augmentation](https://arxiv.org/abs/2502.04235)（ICLR 2026）
 - 数据集：[ByteDance-Seed/mga-fineweb-edu](https://huggingface.co/datasets/ByteDance-Seed/mga-fineweb-edu)（原名 MAGACorpus，ODC-By 许可）
@@ -47,10 +62,13 @@
 ## 仓库结构
 
 ```text
-README.md        项目说明（本文件）
-decisions/       关键决策记录（ADR）
-research/        调研结论
-scripts/         数据筛选等脚本
+README.md            项目说明（本文件）
+decisions/           关键决策记录（ADR）
+research/            调研结论与动画质量规范
+scripts/             筛选、配音时间线、渲染、验收脚本
+assets/              可复用角色（mouse-rig）与配音节拍工具
+.claude/skills/      讲解方法、配音节拍、角色骨架三个 skill
+samples/             样片（剧本、动画、配音）
 ```
 
-后续按需增加 `output/`（成片）。
+成片 MP4 不进仓库，可按样片 README 的命令自行渲染。
